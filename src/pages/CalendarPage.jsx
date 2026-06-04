@@ -417,14 +417,17 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
 // ── Main CalendarPage ─────────────────────────────────────
 export default function CalendarPage() {
   const { communications, channels, updateComm } = useApp()
-  const { perms, canEditCountry }                = useAuth()
+  const { perms, canEditCountry, role, myCountries } = useAuth()
   const { t, i18n }                             = useTranslation()
   const isMobile                                 = useIsMobile()
 
   const [viewMode,     setViewMode]     = useState('week')
   const [weekStart,    setWeekStart]    = useState(() => getMonday())
   const [currentMonth, setCurrentMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() } })
-  const [filters,      setFilters]      = useState({ pais:[], canal:[], topico:[], segmento:[], estado:[] })
+  const defaultPais = (role !== 'super_admin' && myCountries.length > 0)
+    ? [...new Set([...myCountries, 'GL'])]
+    : []
+  const [filters,      setFilters]      = useState({ pais: defaultPais, canal:[], topico:[], segmento:[], estado:[] })
   const [filtersOpen,  setFiltersOpen]  = useState(false)
   const [search,       setSearch]       = useState('')
   const [searchOpen,   setSearchOpen]   = useState(false)
