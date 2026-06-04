@@ -48,13 +48,13 @@ export default function Sidebar({ activeTab, onTabChange }) {
     >
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-3 py-4 border-b border-sidebar-border">
-        <div className="w-7 h-7 rounded-lg bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">C</span>
+        <div className="w-7 h-7 rounded-sm bg-sidebar-foreground flex items-center justify-center flex-shrink-0">
+          <span className="text-sidebar-background text-[10px] font-black tracking-tight">GCH</span>
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <div className="text-sm font-semibold text-sidebar-foreground truncate">CommOS</div>
-            <div className="text-[10px] text-sidebar-foreground/50 truncate">{t('sidebar.subtitle')}</div>
+            <div className="text-sm font-bold text-sidebar-foreground tracking-tight truncate">Global Comms Hub</div>
+            <div className="text-[10px] text-sidebar-foreground/40 uppercase tracking-widest truncate">{t('sidebar.subtitle')}</div>
           </div>
         )}
         <button

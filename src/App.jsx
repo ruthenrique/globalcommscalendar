@@ -29,8 +29,8 @@ function Shell() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="flex items-center gap-2 px-5 py-2.5 border-b border-gray-100 bg-white flex-shrink-0">
-          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-            CommOS
+          <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
+            Global Comms Hub
           </span>
           <span className="text-gray-300 text-xs">/</span>
           <span className="text-[13px] font-semibold text-gray-700">
@@ -57,10 +57,10 @@ function AuthRouter() {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center">
-            <span className="text-white text-sm font-bold">C</span>
+          <div className="w-8 h-8 rounded-sm bg-gray-900 flex items-center justify-center">
+            <span className="text-white text-[9px] font-black tracking-tight">GCH</span>
           </div>
-          <div className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     )

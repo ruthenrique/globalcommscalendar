@@ -24,15 +24,15 @@
     --input: 220 13% 91%;
     --ring: 200 89% 40%;
     --radius: 0.75rem;
-    /* Sidebar — warm gray Notion-style */
-    --sidebar-background: 45 12% 97%;
-    --sidebar-foreground: 220 9% 22%;
-    --sidebar-primary: 200 89% 40%;
+    /* Sidebar — editorial black & white */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 93%;
-    --sidebar-accent-foreground: 220 9% 11%;
-    --sidebar-border: 45 8% 90%;
-    --sidebar-ring: 200 89% 40%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 0 0% 8%;
   }
 }
 
