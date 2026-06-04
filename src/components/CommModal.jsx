@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { COUNTRY_META, FORMAT_ICON, PAIS_IDIOMA } from '@/lib/constants'
 import { arr, formatDateTime } from '@/lib/utils'
 import { toast } from '@/components/layout/Toaster'
+import { supabase } from '@/lib/supabase'
 
 function MultiSelect({ label, options, value, onChange, getLabel, getKey, colorFn }) {
   const vals = arr(value)
@@ -81,14 +82,33 @@ export default function CommModal({ open, onClose, initial = null }) {
     estado: ['Borrador'], destacado: false,
   }
 
-  const [form, setForm]       = useState(empty)
-  const [saving, setSaving]   = useState(false)
+  const [form, setForm]         = useState(empty)
+  const [saving, setSaving]     = useState(false)
   const [langAlert, setLangAlert] = useState('')
+  const [auditUsers, setAuditUsers] = useState({ createdBy: null, updatedBy: null })
 
   useEffect(() => {
     if (open) {
       setForm({ ...empty, ...initial })
       setLangAlert('')
+      setAuditUsers({ createdBy: null, updatedBy: null })
+      if (initial?.id) {
+        supabase
+          .from('audit_log')
+          .select('action, user_name, created_at')
+          .eq('table_name', 'communications')
+          .eq('record_id', String(initial.id))
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            if (!data?.length) return
+            const created = data.find(r => r.action === 'INSERT')
+            const updated = [...data].reverse().find(r => r.action === 'UPDATE')
+            setAuditUsers({
+              createdBy: created?.user_name ?? null,
+              updatedBy: updated?.user_name ?? null,
+            })
+          })
+      }
     }
   }, [open, initial])
 
@@ -306,10 +326,22 @@ export default function CommModal({ open, onClose, initial = null }) {
 
         {/* Audit info */}
         {initial?.created_at && (
-          <div className="text-xs text-muted-foreground border-t pt-3 space-y-0.5">
-            <div>{t('modal.created')}: {formatDateTime(initial.created_at)}</div>
+          <div className="text-xs text-muted-foreground border-t pt-3 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span>{t('modal.created')}:</span>
+              <span>{formatDateTime(initial.created_at)}</span>
+              {auditUsers.createdBy && (
+                <span className="font-medium text-foreground">· {auditUsers.createdBy}</span>
+              )}
+            </div>
             {initial.updated_at !== initial.created_at && (
-              <div>{t('modal.modified')}: {formatDateTime(initial.updated_at)}</div>
+              <div className="flex items-center gap-1.5">
+                <span>{t('modal.modified')}:</span>
+                <span>{formatDateTime(initial.updated_at)}</span>
+                {auditUsers.updatedBy && (
+                  <span className="font-medium text-foreground">· {auditUsers.updatedBy}</span>
+                )}
+              </div>
             )}
           </div>
         )}
