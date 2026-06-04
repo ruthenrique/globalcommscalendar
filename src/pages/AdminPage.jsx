@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { Plus, Edit2, Trash2, Save, X, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -99,19 +99,6 @@ function UsersPanel() {
                   </button>
                 </div>
               </div>
-              {resetPw.email === u.email && (
-                <div className="mt-3 pt-3 border-t flex gap-2 items-center">
-                  <input
-                    type="password"
-                    placeholder="Nueva contraseña"
-                    value={resetPw.value}
-                    onChange={e => setResetPw(r => ({ ...r, value: e.target.value }))}
-                    className="flex-1 text-xs border rounded px-2 py-1 h-7"
-                  />
-                  <Button size="sm" onClick={handleResetPw} className="h-7 text-xs">Guardar</Button>
-                  <Button size="sm" variant="outline" onClick={() => setResetPw({ email: null, value: '' })} className="h-7 text-xs">Cancelar</Button>
-                </div>
-              )}
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -161,6 +148,19 @@ function UsersPanel() {
                   <Button size="sm" variant="outline" onClick={() => setEditing(null)}><X className="h-3.5 w-3.5 mr-1" />Cancelar</Button>
                   <Button size="sm" onClick={() => saveUser(form)}><Save className="h-3.5 w-3.5 mr-1" />Guardar</Button>
                 </div>
+              </div>
+            )}
+            {!isEditing && resetPw.email === u.email && (
+              <div className="mt-3 pt-3 border-t flex gap-2 items-center">
+                <input
+                  type="password"
+                  placeholder="Nueva contraseña"
+                  value={resetPw.value}
+                  onChange={e => setResetPw(r => ({ ...r, value: e.target.value }))}
+                  className="flex-1 text-xs border rounded px-2 py-1 h-7"
+                />
+                <Button size="sm" onClick={handleResetPw} className="h-7 text-xs">Guardar</Button>
+                <Button size="sm" variant="outline" onClick={() => setResetPw({ email: null, value: '' })} className="h-7 text-xs">Cancelar</Button>
               </div>
             )}
           </div>
