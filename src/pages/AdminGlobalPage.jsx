@@ -463,7 +463,7 @@ export default function AdminGlobalPage() {
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
 
         {/* KPIs */}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <KPI label="Total"      value={total}    color="#0EA5E9" icon={FileText}     sub={activeUserFilters > 0 || isRestricted ? `de ${allTotal}` : 'comunicaciones'} />
           <KPI label="Aprobadas"  value={approved}  color="#10B981" icon={CheckCircle2} sub={total ? `${Math.round(approved / total * 100)}% del total` : '—'} />
           <KPI label="Publicadas" value={published} color="#185FA5" icon={TrendingUp}   sub={total ? `${Math.round(published / total * 100)}% del total` : '—'} />
@@ -472,7 +472,7 @@ export default function AdminGlobalPage() {
         </div>
 
         {/* Insights cualitativos */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Insight
             emoji="📅"
             fact={DOW_NAMES[insights.bestDow] ?? '—'}
@@ -522,8 +522,8 @@ export default function AdminGlobalPage() {
         </div>
 
         {/* Tendencia + Canal donut */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
             <STitle sub={`Año ${new Date().getFullYear()}`}>Tendencia mensual</STitle>
             <ResponsiveContainer width="100%" height={150}>
               <AreaChart data={byMonth} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
@@ -570,8 +570,8 @@ export default function AdminGlobalPage() {
         </div>
 
         {/* Tópicos + Formatos */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
             <STitle sub="Distribución por tema">Tópicos</STitle>
             <TopicCloud communications={filtered} />
           </div>
@@ -582,12 +582,12 @@ export default function AdminGlobalPage() {
         </div>
 
         {/* Estado funnel + Por país */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <STitle sub="Pipeline de aprobación">Estado</STitle>
             <StatusFunnel communications={filtered} />
           </div>
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
+          <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
             <STitle sub="Volumen por unidad">Por país</STitle>
             <div className="space-y-2.5">
               {countryData.map(c => {
