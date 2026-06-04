@@ -14,7 +14,7 @@ const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
 const LANGS = ['es', 'en', 'pt']
 
 export default function Sidebar({ activeTab, onTabChange }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [changePw, setChangePw] = useState(false)
   const [pwForm, setPwForm] = useState({ pw: '', pw2: '' })
 
@@ -35,6 +35,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
 
   const navItems = NAV_ITEMS.filter(item => {
     if (item.id === 'admin') return perms.canManage
+    if (item.id === 'data')  return role !== 'viewer'
     return true
   })
 

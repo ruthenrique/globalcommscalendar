@@ -1,6 +1,6 @@
 // Country metadata (synced with DB, used as fallback)
 export const COUNTRY_META = {
-  AR: { name: 'Argentina',  flag: '🇦🇷', color: '#534AB7' },
+  AR: { name: 'Argentina',  flag: '🇦🇷', color: '#8B5CF6' },
   GL: { name: 'Global',     flag: '🌍',  color: '#1D9E75' },
   MX: { name: 'México',     flag: '🇲🇽', color: '#D85A30' },
   CL: { name: 'Chile',      flag: '🇨🇱', color: '#BA7517' },
@@ -11,7 +11,7 @@ export const COUNTRY_META = {
 }
 
 export const CHANNEL_META = {
-  Emarsys:           { color: '#534AB7', type: 'internal' },
+  Emarsys:           { color: '#818CF8', type: 'internal' },
   Humand:            { color: '#1D9E75', type: 'internal' },
   'Cartelera Digital':{ color: '#185FA5', type: 'internal' },
   LinkedIn:          { color: '#3C3489', type: 'external' },

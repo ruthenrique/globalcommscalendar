@@ -3,7 +3,7 @@
     "cal":   "Calendário",
     "an":    "Analytics",
     "data":  "Data Master",
-    "map":   "Admin Global",
+    "map":   "Dashboard",
     "admin": "Administração"
   },
   "sidebar": {
@@ -77,7 +77,7 @@
     "cal":   "Calendário",
     "an":    "Analytics",
     "data":  "Data Master",
-    "map":   "Admin Global",
+    "map":   "Dashboard",
     "admin": "Administração"
   }
 }

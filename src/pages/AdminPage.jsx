@@ -172,6 +172,7 @@ function UsersPanel() {
 
 // ── Generic list panel (countries, categories, channels) ─
 function ListPanel({ table, fields, label }) {
+  const { reload } = useApp()
   const [items, setItems]     = useState([])
   const [editing, setEditing] = useState(null)
   const [adding, setAdding]   = useState(false)
@@ -184,12 +185,12 @@ function ListPanel({ table, fields, label }) {
   async function save() {
     if (editing === 'new') {
       const { data, error } = await supabase.from(table).insert(form).select().single()
-      if (!error) { setItems(p => [...p, data]); setEditing(null); setAdding(false); setForm({}) }
-      else toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      if (!error) { setItems(p => [...p, data]); setEditing(null); setAdding(false); setForm({}); reload() }
+      else { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return }
     } else {
       const { data, error } = await supabase.from(table).update(form).eq('id', editing).select().single()
-      if (!error) { setItems(p => p.map(x => x.id === editing ? data : x)); setEditing(null) }
-      else toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      if (!error) { setItems(p => p.map(x => x.id === editing ? data : x)); setEditing(null); reload() }
+      else { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return }
     }
     toast({ title: 'Guardado ✓', variant: 'success' })
   }
@@ -197,7 +198,7 @@ function ListPanel({ table, fields, label }) {
   async function remove(id) {
     if (!confirm('¿Eliminar?')) return
     const { error } = await supabase.from(table).delete().eq('id', id)
-    if (!error) setItems(p => p.filter(x => x.id !== id))
+    if (!error) { setItems(p => p.filter(x => x.id !== id)); reload() }
     else toast({ title: 'Error', description: error.message, variant: 'destructive' })
   }
 

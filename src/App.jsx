@@ -17,7 +17,7 @@ import { AppProvider } from '@/contexts/AppContext'
 const DEMO_MODE = false
 
 // ── Shell (layout compartido) ──────────────────────────────────────
-const PAGE_ICONS = { cal: '📅', map: '📊', data: '🗃', admin: '⚙️' }
+const PAGE_ICONS = { cal: '📅', map: '✦', data: '🗃', admin: '⚙️' }
 
 function Shell() {
   const [tab, setTab] = useState('cal')

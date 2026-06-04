@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, SlidersHorizontal, X, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useApp } from '@/contexts/AppContext'
@@ -12,12 +12,12 @@ import {
   INTERNAL_CHANNELS, EXTERNAL_CHANNELS,
 } from '@/lib/constants'
 
-// ── i18n labels ───────────────────────────────────────
+// ── i18n ──────────────────────────────────────────────────
 const DOW_ES    = ['Do','Lu','Ma','Mi','Ju','Vi','Sá']
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const DOW_EN    = ['Su','Mo','Tu','We','Th','Fr','Sa']
-const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DOW_PT    = ['Do','Se','Te','Qu','Qu','Se','Sá']
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 function getDowLabels(lang) {
@@ -30,13 +30,12 @@ function getMonthNames(lang) {
   if (lang.startsWith('pt')) return MONTHS_PT
   return MONTHS_ES
 }
-// Mon-first order: [Mon…Sun]
 function getMonFirstLabels(lang) {
   const l = getDowLabels(lang)
   return [...l.slice(1), l[0]]
 }
 
-// ── Date helpers ──────────────────────────────────────
+// ── Date helpers ──────────────────────────────────────────
 function getMonday(d = new Date()) {
   const r = new Date(d)
   const day = r.getDay()
@@ -44,84 +43,97 @@ function getMonday(d = new Date()) {
   r.setHours(0, 0, 0, 0)
   return r
 }
-function addDays(d, n) {
-  const r = new Date(d); r.setDate(r.getDate() + n); return r
-}
-function weekLabel(monday, lang) {
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r }
+function weekLabel(monday, lang, short = false) {
   const sunday = addDays(monday, 6)
   const months = getMonthNames(lang)
   const ms = months[monday.getMonth()]
   const ss = months[sunday.getMonth()]
   const y  = sunday.getFullYear()
+  if (short) return `${monday.getDate()}–${sunday.getDate()} ${ms.slice(0, 3)}`
   if (ms === ss) return `${monday.getDate()}–${sunday.getDate()} de ${ms} ${y}`
   return `${monday.getDate()} ${ms} – ${sunday.getDate()} ${ss} ${y}`
 }
 
-// ── Filters ───────────────────────────────────────────
+// ── Mobile hook ───────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const handler = e => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
+
+// ── Filter keys ───────────────────────────────────────────
 const FILTER_KEYS = [
-  { key: 'pais',     tKey: 'filter.country' },
-  { key: 'canal',    tKey: 'filter.channel' },
-  { key: 'topico',   tKey: 'filter.topic'   },
-  { key: 'segmento', tKey: 'filter.segment' },
-  { key: 'estado',   tKey: 'filter.status'  },
+  { key: 'pais',     label: 'País'     },
+  { key: 'canal',    label: 'Canal'    },
+  { key: 'topico',   label: 'Tópico'   },
+  { key: 'segmento', label: 'Segmento' },
+  { key: 'estado',   label: 'Estado'   },
 ]
 
-function FilterPill({ label, tClear, options, value, onChange }) {
-  const [open, setOpen] = useState(false)
-  const has = value.length > 0
+// ── Inline chip filter row ────────────────────────────────
+function FilterRow({ label, options, value, onChange, renderChip }) {
+  if (!options.length) return null
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border transition-colors ${
-          has ? 'bg-sky-50 border-sky-200 text-sky-700 font-medium' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
-        }`}
-      >
-        <span className="text-[10px] uppercase tracking-wider">{label}</span>
-        {has && <span className="font-bold">·{value.length}</span>}
-        <span className="opacity-40 text-[10px]">▾</span>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
-          <div className="absolute top-full mt-1 left-0 z-30 bg-white border border-gray-100 rounded-2xl shadow-xl min-w-[160px] overflow-hidden">
-            <div className="max-h-52 overflow-y-auto py-1">
-              {options.map(opt => {
-                const sel = value.includes(opt)
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => onChange(sel ? value.filter(v => v !== opt) : [...value, opt])}
-                    className={`w-full text-left flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 transition-colors ${sel ? 'bg-sky-50/60 text-sky-700 font-medium' : 'text-gray-700'}`}
-                  >
-                    <span className={`w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center text-[8px] ${sel ? 'bg-sky-500 border-sky-500 text-white' : 'border-gray-300'}`}>
-                      {sel ? '✓' : ''}
-                    </span>
-                    {COUNTRY_META[opt]?.flag ? `${COUNTRY_META[opt].flag} ` : ''}{opt}
-                  </button>
-                )
-              })}
-            </div>
-            {has && (
-              <div className="border-t px-3 py-1.5">
-                <button onClick={() => onChange([])} className="text-xs text-gray-400 hover:text-gray-700">{tClear}</button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+    <div className="flex items-start gap-3">
+      <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 w-16 flex-shrink-0 pt-1.5 text-right">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(opt => {
+          const sel = value.includes(opt)
+          return (
+            <button
+              key={opt}
+              onClick={() => onChange(sel ? value.filter(v => v !== opt) : [...value, opt])}
+              className={cn(
+                'text-xs px-2.5 py-1 rounded-full border transition-all font-medium',
+                sel
+                  ? 'bg-sky-500 border-sky-500 text-white shadow-sm'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-sky-300 hover:text-sky-600'
+              )}
+            >
+              {renderChip ? renderChip(opt) : opt}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-// ── Event cards ───────────────────────────────────────
-function EventCard({ ev, status_t, onClick, onDragStart }) {
+// ── Event card (week, full) ───────────────────────────────
+function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
   const paises   = arr(ev.pais)
   const canal    = arr(ev.canal)[0]
   const status   = arr(ev.estado)[0]
   const formato  = arr(ev.formato)[0]
   const chanMeta = CHANNEL_META[canal] ?? {}
   const stMeta   = STATUS_META[status] ?? {}
+
+  if (compact) {
+    return (
+      <div
+        onClick={onClick}
+        title={ev.titulo}
+        className="comm-chip rounded-md px-1.5 py-1 mb-1 cursor-pointer overflow-hidden"
+        style={{ background: stMeta.bg ?? '#f5f5f7', borderLeft: `2px solid ${chanMeta.color ?? '#d1d5db'}`, opacity: status === 'Cancelado' ? 0.45 : 1 }}
+      >
+        <div className="flex items-center gap-0.5 mb-0.5">
+          {paises.slice(0, 2).map(p => <span key={p} className="text-[10px] leading-none">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+          {ev.destacado && <span className="text-amber-400 text-[8px] ml-auto">★</span>}
+        </div>
+        <div className="text-[10px] font-semibold leading-snug line-clamp-2" style={{ color: stMeta.color ?? '#1a1a1a' }}>
+          {ev.titulo}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -130,38 +142,23 @@ function EventCard({ ev, status_t, onClick, onDragStart }) {
       onClick={onClick}
       title={ev.titulo}
       className="comm-chip rounded-lg p-2 mb-1.5 cursor-pointer overflow-hidden"
-      style={{
-        background: stMeta.bg ?? '#f5f5f7',
-        color:      stMeta.color ?? '#1a1a1a',
-        borderLeft: `3px solid ${chanMeta.color ?? '#d1d5db'}`,
-        opacity:    status === 'Cancelado' ? 0.45 : 1,
-        boxShadow:  ev.destacado ? `0 0 0 1.5px ${chanMeta.color ?? '#e5e7eb'}60` : undefined,
-      }}
+      style={{ background: stMeta.bg ?? '#f5f5f7', color: stMeta.color ?? '#1a1a1a', borderLeft: `3px solid ${chanMeta.color ?? '#d1d5db'}`, opacity: status === 'Cancelado' ? 0.45 : 1 }}
     >
-      {/* Flags + status */}
       <div className="flex items-center gap-0.5 mb-1">
         <div className="flex items-center">
-          {paises.slice(0, 4).map(p => (
-            <span key={p} className="text-[11px] leading-none -mr-0.5">{COUNTRY_META[p]?.flag ?? ''}</span>
-          ))}
-          {paises.length > 4 && <span className="text-[8px] text-current opacity-50 ml-1">+{paises.length - 4}</span>}
+          {paises.slice(0, 4).map(p => <span key={p} className="text-[11px] leading-none -mr-0.5">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+          {paises.length > 4 && <span className="text-[8px] opacity-50 ml-1">+{paises.length - 4}</span>}
         </div>
         {ev.destacado && <span className="text-amber-400 text-[9px] ml-0.5">★</span>}
-        <span
-          className="ml-auto text-[8px] font-semibold px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap flex-shrink-0"
-          style={{ background: (stMeta.dot ?? '#888') + '22', color: stMeta.dot ?? '#888' }}
-        >
+        <span className="ml-auto text-[8px] font-semibold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0"
+          style={{ background: (stMeta.dot ?? '#888') + '22', color: stMeta.dot ?? '#888' }}>
           {status_t}
         </span>
       </div>
-
-      {/* Title */}
       <div className="text-[11px] font-semibold leading-snug line-clamp-2 mb-1">
         {FORMAT_ICON[formato] ? <span className="mr-0.5">{FORMAT_ICON[formato]}</span> : null}
         {ev.titulo}
       </div>
-
-      {/* Canal */}
       {canal && (
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: chanMeta.color ?? '#ccc' }} />
@@ -172,15 +169,13 @@ function EventCard({ ev, status_t, onClick, onDragStart }) {
   )
 }
 
-// Compact card for month view
+// ── Mini card (month view) ────────────────────────────────
 function MiniCard({ ev, onClick, onDragStart }) {
   const country  = arr(ev.pais)[0]
   const canal    = arr(ev.canal)[0]
   const status   = arr(ev.estado)[0]
   const chanMeta = CHANNEL_META[canal] ?? {}
   const stMeta   = STATUS_META[status] ?? {}
-  const flag     = COUNTRY_META[country]?.flag ?? ''
-
   return (
     <div
       draggable
@@ -188,41 +183,31 @@ function MiniCard({ ev, onClick, onDragStart }) {
       onClick={e => { e.stopPropagation(); onClick() }}
       title={ev.titulo}
       className="text-[10px] font-medium px-1.5 py-0.5 rounded cursor-pointer flex items-center gap-1 mb-0.5 overflow-hidden"
-      style={{
-        background: stMeta.bg ?? '#f5f5f7',
-        color:      stMeta.color ?? '#1a1a1a',
-        borderLeft: `2px solid ${chanMeta.color ?? '#d1d5db'}`,
-        opacity:    status === 'Cancelado' ? 0.6 : 1,
-      }}
+      style={{ background: stMeta.bg ?? '#f5f5f7', color: stMeta.color ?? '#1a1a1a', borderLeft: `2px solid ${chanMeta.color ?? '#d1d5db'}`, opacity: status === 'Cancelado' ? 0.6 : 1 }}
     >
-      <span className="flex-shrink-0 leading-none">{flag}</span>
+      <span className="flex-shrink-0 leading-none">{COUNTRY_META[country]?.flag ?? ''}</span>
       <span className="truncate flex-1">{ev.titulo}</span>
       {ev.destacado && <span className="text-amber-400 flex-shrink-0 text-[9px]">★</span>}
     </div>
   )
 }
 
-// ── Country overload alert ────────────────────────────
+// ── Country overload alert ────────────────────────────────
 const INT_SET = new Set(INTERNAL_CHANNELS)
 const EXT_SET = new Set(EXTERNAL_CHANNELS)
 
 function CountryAlert({ comms, dateStrs }) {
-  const intCounts = {}
-  const extCounts = {}
-
-  comms
-    .filter(ev => dateStrs.includes(ev.date))
-    .forEach(ev => {
-      const channels = arr(ev.canal)
-      const hasInt = channels.some(c => INT_SET.has(c))
-      const hasExt = channels.some(c => EXT_SET.has(c))
-      arr(ev.pais).forEach(p => {
-        const key = `${p}||${ev.date}`
-        if (hasInt) intCounts[key] = (intCounts[key] ?? 0) + 1
-        if (hasExt) extCounts[key] = (extCounts[key] ?? 0) + 1
-      })
+  const intCounts = {}, extCounts = {}
+  comms.filter(ev => dateStrs.includes(ev.date)).forEach(ev => {
+    const channels = arr(ev.canal)
+    const hasInt = channels.some(c => INT_SET.has(c))
+    const hasExt = channels.some(c => EXT_SET.has(c))
+    arr(ev.pais).forEach(p => {
+      const key = `${p}||${ev.date}`
+      if (hasInt) intCounts[key] = (intCounts[key] ?? 0) + 1
+      if (hasExt) extCounts[key] = (extCounts[key] ?? 0) + 1
     })
-
+  })
   const alerts = []
   const allKeys = new Set([...Object.keys(intCounts), ...Object.keys(extCounts)])
   allKeys.forEach(key => {
@@ -233,25 +218,22 @@ function CountryAlert({ comms, dateStrs }) {
     if ((intCounts[key] ?? 0) > 3) alerts.push({ key: `${key}|int`, label, day, n: intCounts[key], type: 'int' })
     if ((extCounts[key] ?? 0) > 3) alerts.push({ key: `${key}|ext`, label, day, n: extCounts[key], type: 'ext' })
   })
-
   if (!alerts.length) return null
-
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 border-b border-amber-100 text-xs text-amber-700 flex-shrink-0 flex-wrap">
-      <span className="font-semibold">⚠️ Más de 3 comms en un día:</span>
+    <div className="flex items-center gap-2 px-4 py-1 flex-shrink-0 flex-wrap border-b border-gray-100">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+      <span className="text-[10px] text-gray-400">Saturación:</span>
       {alerts.map(({ key, label, day, n, type }) => (
-        <span key={key} className={cn(
-          'font-medium px-2 py-0.5 rounded-full',
-          type === 'int' ? 'bg-amber-100' : 'bg-sky-100 text-sky-700'
-        )}>
-          {label} el {day} · {n} {type === 'int' ? 'int' : 'ext'}
+        <span key={key} className="text-[10px] text-gray-500">
+          {label} <span className="text-gray-400">{day}</span>
+          <span className={cn('ml-1 font-semibold', type === 'int' ? 'text-amber-500' : 'text-sky-500')}>·{n}</span>
         </span>
       ))}
     </div>
   )
 }
 
-// ── Month view ────────────────────────────────────────
+// ── Month view ────────────────────────────────────────────
 function MonthView({ year, month, communications, filters, today, lang, canEdit, onClickCard, onAdd, onDragStart, onDrop }) {
   const [dragOver, setDragOver] = useState(null)
   const dowLabels = getMonFirstLabels(lang)
@@ -264,100 +246,59 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
     let cur = new Date(year, month, 1 - dayOfWeek)
     while (cur <= lastDay && result.length < 6) {
       const week = []
-      for (let i = 0; i < 7; i++) {
-        week.push(new Date(cur))
-        cur.setDate(cur.getDate() + 1)
-      }
+      for (let i = 0; i < 7; i++) { week.push(new Date(cur)); cur.setDate(cur.getDate() + 1) }
       result.push(week)
     }
     return result
   }, [year, month])
 
   const allDateSet = useMemo(() => {
-    const s = new Set()
-    weeks.forEach(w => w.forEach(d => s.add(dateStr(d))))
-    return s
+    const s = new Set(); weeks.forEach(w => w.forEach(d => s.add(dateStr(d)))); return s
   }, [weeks])
 
   const filtered = useMemo(() =>
-    communications.filter(ev =>
-      allDateSet.has(ev.date) &&
-      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
-    ),
+    communications.filter(ev => allDateSet.has(ev.date) && FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))),
     [communications, allDateSet, filters]
   )
 
   const byDate = useMemo(() => {
-    const map = {}
-    filtered.forEach(ev => {
-      if (!map[ev.date]) map[ev.date] = []
-      map[ev.date].push(ev)
-    })
-    return map
+    const map = {}; filtered.forEach(ev => { if (!map[ev.date]) map[ev.date] = []; map[ev.date].push(ev) }); return map
   }, [filtered])
-
-  const MAX_SHOW = 4
 
   return (
     <div className="flex flex-col h-full overflow-auto">
-      {/* Column headers */}
       <div className="grid grid-cols-7 border-b border-gray-100 flex-shrink-0">
         {dowLabels.map((d, i) => (
-          <div key={i} className="text-center py-2 text-[10px] uppercase tracking-widest text-gray-400 font-medium border-r border-gray-100 last:border-r-0">
-            {d}
-          </div>
+          <div key={i} className="text-center py-2 text-[10px] uppercase tracking-widest text-gray-400 font-medium border-r border-gray-100 last:border-r-0">{d}</div>
         ))}
       </div>
-
-      {/* Weeks */}
-      <div className="flex-1" style={{ display: 'grid', gridTemplateRows: `repeat(${weeks.length}, minmax(100px, 1fr))` }}>
+      <div className="flex-1" style={{ display: 'grid', gridTemplateRows: `repeat(${weeks.length}, minmax(80px, 1fr))` }}>
         {weeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7" style={{ minHeight: 100 }}>
+          <div key={wi} className="grid grid-cols-7" style={{ minHeight: 80 }}>
             {week.map(d => {
-              const ds             = dateStr(d)
+              const ds = dateStr(d)
               const isCurrentMonth = d.getMonth() === month && d.getFullYear() === year
-              const dow            = d.getDay()
-              const isWE           = dow === 0 || dow === 6
-              const isTod          = ds === today
-              const isDO           = dragOver === ds
-              const evs            = byDate[ds] ?? []
-
+              const dow = d.getDay()
+              const isWE = dow === 0 || dow === 6
+              const isTod = ds === today
+              const isDO = dragOver === ds
+              const evs = byDate[ds] ?? []
               return (
                 <div
                   key={ds}
-                  className={cn(
-                    'border-r border-b border-gray-100 p-1 last:border-r-0 overflow-hidden',
-                    !isCurrentMonth ? 'bg-gray-50/50' : isWE ? 'bg-gray-50/30' : 'bg-white',
-                    isTod ? '!bg-sky-50/50' : '',
-                    isDO  ? '!bg-sky-50 ring-1 ring-inset ring-sky-200' : '',
-                    canEdit && isCurrentMonth ? 'cursor-pointer' : '',
-                  )}
+                  className={cn('border-r border-b border-gray-100 p-1 last:border-r-0 overflow-hidden', !isCurrentMonth ? 'bg-gray-50/50' : isWE ? 'bg-gray-50/30' : 'bg-white', isTod ? '!bg-sky-50/50' : '', isDO ? '!bg-sky-50 ring-1 ring-inset ring-sky-200' : '', canEdit && isCurrentMonth ? 'cursor-pointer' : '')}
                   onClick={() => canEdit && isCurrentMonth && onAdd(ds)}
                   onDragOver={e => { e.preventDefault(); setDragOver(ds) }}
                   onDragLeave={() => setDragOver(null)}
                   onDrop={e => { e.preventDefault(); setDragOver(null); onDrop(ds) }}
                 >
-                  <div className={cn(
-                    'text-[11px] font-semibold w-5 h-5 flex items-center justify-center rounded-full mb-0.5',
-                    isTod           ? 'bg-sky-500 text-white'  :
-                    !isCurrentMonth ? 'text-gray-300'          :
-                    isWE            ? 'text-gray-400'          : 'text-gray-700',
-                  )}>
+                  <div className={cn('text-[11px] font-semibold w-5 h-5 flex items-center justify-center rounded-full mb-0.5', isTod ? 'bg-sky-500 text-white' : !isCurrentMonth ? 'text-gray-300' : isWE ? 'text-gray-400' : 'text-gray-700')}>
                     {d.getDate()}
                   </div>
-                  {evs.slice(0, MAX_SHOW).map(ev => (
-                    <MiniCard
-                      key={ev.id}
-                      ev={ev}
-                      onClick={() => onClickCard(ev)}
-                      onDragStart={() => onDragStart(ev.id)}
-                    />
+                  {evs.slice(0, 3).map(ev => (
+                    <MiniCard key={ev.id} ev={ev} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} />
                   ))}
-                  {evs.length > MAX_SHOW && (
-                    <div className="text-[9px] text-gray-400 font-medium pl-1 mt-0.5">
-                      +{evs.length - MAX_SHOW} más
-                    </div>
-                  )}
+                  {evs.length > 3 && <div className="text-[9px] text-gray-400 font-medium pl-1 mt-0.5">+{evs.length - 3} más</div>}
                 </div>
               )
             })}
@@ -368,324 +309,16 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
   )
 }
 
-// ── Main CalendarPage ─────────────────────────────────
-export default function CalendarPage() {
-  const { communications, channels, updateComm } = useApp()
-  const { perms, canEditCountry }                = useAuth()
-  const { t, i18n }                             = useTranslation()
-
-  const [viewMode,      setViewMode]      = useState('week')
-  const [weekStart,     setWeekStart]     = useState(() => getMonday())
-  const [currentMonth,  setCurrentMonth]  = useState(() => {
-    const d = new Date()
-    return { year: d.getFullYear(), month: d.getMonth() }
-  })
-  const [filters, setFilters] = useState({ pais:[], canal:[], topico:[], segmento:[], estado:[] })
-  const [modal,   setModal]   = useState({ open: false, initial: null })
-  const [dragId,  setDragId]  = useState(null)
-
-  const today      = todayStr()
-  const lang       = i18n.language
-  const monthNames = getMonthNames(lang)
-  const dowLabels  = getDowLabels(lang)
-
-  const weekDays    = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
-  const weekDayStrs = useMemo(() => weekDays.map(d => dateStr(d)), [weekDays])
-  const isThisWeek  = weekDayStrs.includes(today)
-
-  // Filter option lists
-  const paiOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.pais)))].sort(), [communications])
-  const canalOptions  = useMemo(() => [...new Set(communications.flatMap(c => arr(c.canal)))].sort(), [communications])
-  const topicoOptions = useMemo(() => [...new Set(communications.flatMap(c => arr(c.topico)))].sort(), [communications])
-  const segOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.segmento)))].sort(), [communications])
-  const estadoOptions = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
-  const filterOptions = { pais: paiOptions, canal: canalOptions, topico: topicoOptions, segmento: segOptions, estado: estadoOptions }
-
-  // Week-filtered comms
-  const weekFiltered = useMemo(() =>
-    communications.filter(ev =>
-      weekDayStrs.includes(ev.date) &&
-      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
-    ),
-    [communications, weekDayStrs, filters]
-  )
-
-  const byDate = useMemo(() => {
-    const map = {}
-    weekFiltered.forEach(ev => {
-      if (!map[ev.date]) map[ev.date] = []
-      map[ev.date].push(ev)
-    })
-    return map
-  }, [weekFiltered])
-
-  const internalCh = channels.length > 0 ? channels.filter(c => c.type === 'internal').map(c => c.name) : INTERNAL_CHANNELS
-  const externalCh = channels.length > 0 ? channels.filter(c => c.type === 'external').map(c => c.name) : EXTERNAL_CHANNELS
-  const allChannels = [...internalCh, ...externalCh]
-  const visChannels = allChannels.filter(ch => filters.canal.length === 0 || filters.canal.includes(ch))
-
-  // Month navigation
-  function prevMonth() {
-    setCurrentMonth(({ year, month }) =>
-      month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 }
-    )
-  }
-  function nextMonth() {
-    setCurrentMonth(({ year, month }) =>
-      month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 }
-    )
-  }
-
-  // Modal helpers
-  function openNew(canal = '', date = '') {
-    setModal({
-      open: true,
-      initial: {
-        titulo:'', body:'', date, pais:[], canal: canal ? [canal] : [],
-        segmento:[], ubicacion:[], topico:[], formato:[], idioma:[],
-        alcance:['Local'], estado:['Borrador'], destacado:false,
-      },
-    })
-  }
-  function openEdit(ev) { setModal({ open: true, initial: ev }) }
-
-  // Drag & drop
-  async function handleWeekDrop(ds, ch) {
-    if (!dragId || !perms.canEdit) return
-    const ev = communications.find(c => c.id === dragId)
-    if (!ev || !canEditCountry(arr(ev.pais))) return
-    const newCanal = arr(ev.canal).includes(ch) ? ev.canal : [ch]
-    await updateComm(ev.id, { ...ev, date: ds, canal: newCanal })
-    toast({ title: t('toast.moved'), variant: 'success' })
-    setDragId(null)
-  }
-
-  async function handleMonthDrop(ds) {
-    if (!dragId || !perms.canEdit) return
-    const ev = communications.find(c => c.id === dragId)
-    if (!ev || !canEditCountry(arr(ev.pais))) return
-    await updateComm(ev.id, { ...ev, date: ds })
-    toast({ title: t('toast.moved'), variant: 'success' })
-    setDragId(null)
-  }
-
-  return (
-    <div className="flex flex-col h-full overflow-hidden bg-white">
-
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-white flex-wrap flex-shrink-0">
-
-        {/* Navigation */}
-        <div className="flex items-center gap-0.5">
-          {viewMode === 'week' ? (
-            <>
-              <button onClick={() => setWeekStart(w => addDays(w, -7))} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <ChevronLeft className="h-4 w-4 text-gray-400" />
-              </button>
-              <span className="text-sm font-semibold text-gray-800 px-2 min-w-[210px] text-center select-none">
-                {weekLabel(weekStart, lang)}
-              </span>
-              <button onClick={() => setWeekStart(w => addDays(w, 7))} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <ChevronLeft className="h-4 w-4 text-gray-400" />
-              </button>
-              <span className="text-sm font-semibold text-gray-800 px-2 min-w-[160px] text-center select-none">
-                {monthNames[currentMonth.month]} {currentMonth.year}
-              </span>
-              <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-1.5 flex-wrap">
-          {FILTER_KEYS.map(fd => (
-            <FilterPill
-              key={fd.key}
-              label={t(fd.tKey)}
-              tClear={t('filter.clear')}
-              options={filterOptions[fd.key]}
-              value={filters[fd.key]}
-              onChange={v => setFilters(f => ({ ...f, [fd.key]: v }))}
-            />
-          ))}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Week / Month toggle */}
-          <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs">
-            <button
-              onClick={() => setViewMode('week')}
-              className={cn('px-3 py-1.5 transition-colors', viewMode === 'week' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}
-            >
-              Semana
-            </button>
-            <button
-              onClick={() => setViewMode('month')}
-              className={cn('px-3 py-1.5 transition-colors border-l border-gray-200', viewMode === 'month' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}
-            >
-              Mes
-            </button>
-          </div>
-
-          {viewMode === 'week' && !isThisWeek && (
-            <Button size="sm" variant="outline" onClick={() => setWeekStart(getMonday())}>
-              <CalendarDays className="h-3.5 w-3.5 mr-1" /> {t('calendar.today')}
-            </Button>
-          )}
-          {perms.canEdit && (
-            <Button size="sm" onClick={() => openNew()}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> {t('calendar.new')}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Country overload alert (week view) */}
-      {viewMode === 'week' && (
-        <CountryAlert comms={communications} dateStrs={weekDayStrs} />
-      )}
-
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {viewMode === 'week' ? (
-          <div className="h-full overflow-auto">
-            <table className="border-collapse" style={{ minWidth: 480, width: '100%', tableLayout: 'fixed' }}>
-              <colgroup>
-                <col style={{ width: 80, minWidth: 80 }} />
-                {weekDays.map((_, i) => <col key={i} />)}
-              </colgroup>
-              <thead className="sticky top-0 z-10 bg-white">
-                <tr>
-                  <th className="border-b border-r border-gray-100 bg-gray-50/40 px-2 py-2" />
-                  {weekDays.map(d => {
-                    const ds   = dateStr(d)
-                    const dow  = d.getDay()
-                    const isWE = dow === 0 || dow === 6
-                    const isTod = ds === today
-                    return (
-                      <th
-                        key={ds}
-                        className={cn(
-                          'border-b border-r border-gray-100 px-1 py-2 text-center font-normal',
-                          isWE  ? 'bg-gray-50/60' : 'bg-white',
-                          isTod ? '!bg-sky-50 !border-b-2 !border-b-sky-400' : '',
-                        )}
-                      >
-                        <div className={`text-[10px] uppercase tracking-widest mb-0.5 ${isTod ? 'text-sky-500 font-bold' : 'text-gray-400'}`}>
-                          {dowLabels[dow]}
-                        </div>
-                        <div className={cn(
-                          'text-sm font-bold w-7 h-7 flex items-center justify-center mx-auto rounded-full',
-                          isTod ? 'bg-sky-500 text-white' : isWE ? 'text-gray-300' : 'text-gray-800',
-                        )}>
-                          {d.getDate()}
-                        </div>
-                      </th>
-                    )
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={8} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">
-                    {t('calendar.internalChannels')}
-                  </td>
-                </tr>
-                {internalCh.filter(ch => visChannels.includes(ch)).map(ch => (
-                  <WeekChannelRow
-                    key={ch}
-                    channel={ch}
-                    days={weekDays}
-                    today={today}
-                    byDate={byDate}
-                    canEdit={perms.canEdit}
-                    canEditCountry={canEditCountry}
-                    onClickCard={openEdit}
-                    onAdd={(ch, ds) => openNew(ch, ds)}
-                    onDragStart={id => setDragId(id)}
-                    onDrop={handleWeekDrop}
-                    statusT={s => t(`status.${s}`, s)}
-                  />
-                ))}
-                <tr>
-                  <td colSpan={8} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">
-                    {t('calendar.externalChannels')}
-                  </td>
-                </tr>
-                {externalCh.filter(ch => visChannels.includes(ch)).map(ch => (
-                  <WeekChannelRow
-                    key={ch}
-                    channel={ch}
-                    days={weekDays}
-                    today={today}
-                    byDate={byDate}
-                    canEdit={perms.canEdit}
-                    canEditCountry={canEditCountry}
-                    onClickCard={openEdit}
-                    onAdd={(ch, ds) => openNew(ch, ds)}
-                    onDragStart={id => setDragId(id)}
-                    onDrop={handleWeekDrop}
-                    statusT={s => t(`status.${s}`, s)}
-                  />
-                ))}
-              </tbody>
-            </table>
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 px-4 py-3 text-xs text-gray-400 border-t border-gray-100">
-              {allChannels.map(ch => (
-                <span key={ch} className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: CHANNEL_META[ch]?.color ?? '#ccc' }} />
-                  <span className="text-gray-500">{ch}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <MonthView
-            year={currentMonth.year}
-            month={currentMonth.month}
-            communications={communications}
-            filters={filters}
-            today={today}
-            lang={lang}
-            canEdit={perms.canEdit}
-            onClickCard={openEdit}
-            onAdd={ds => openNew('', ds)}
-            onDragStart={id => setDragId(id)}
-            onDrop={handleMonthDrop}
-            statusT={s => t(`status.${s}`, s)}
-          />
-        )}
-      </div>
-
-      <CommModal
-        open={modal.open}
-        initial={modal.initial}
-        onClose={() => setModal({ open: false, initial: null })}
-      />
-    </div>
-  )
-}
-
-// ── Week Channel Row ──────────────────────────────────
-function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry, onClickCard, onAdd, onDragStart, onDrop, statusT }) {
+// ── Week channel row ──────────────────────────────────────
+function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry, onClickCard, onAdd, onDragStart, onDrop, statusT, compact }) {
   const chanMeta = CHANNEL_META[channel] ?? {}
   const [dragOver, setDragOver] = useState(null)
-
   return (
     <tr className="group">
-      <td className="sticky left-0 z-[5] bg-white border-r border-b border-gray-100 px-2 py-2" style={{ width: 80, minWidth: 80 }}>
-        <div className="flex items-center gap-1.5">
+      <td className={cn('sticky left-0 z-[5] bg-white border-r border-b border-gray-100 py-2', compact ? 'px-1.5' : 'px-2')} style={{ width: compact ? 50 : 80, minWidth: compact ? 50 : 80 }}>
+        <div className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: chanMeta.color ?? '#d1d5db' }} />
-          <span className="text-[10px] font-medium text-gray-600 truncate leading-tight">{channel}</span>
+          {!compact && <span className="text-[10px] font-medium text-gray-600 truncate leading-tight">{channel}</span>}
         </div>
       </td>
       {days.map(d => {
@@ -695,17 +328,11 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
         const isTod = ds === today
         const evs  = (byDate[ds] ?? []).filter(ev => arr(ev.canal).includes(channel))
         const isDO = dragOver === ds
-
         return (
           <td
             key={ds}
-            className={cn(
-              'border-r border-b border-gray-100 align-top p-1.5',
-              isWE  ? 'bg-gray-50/50' : 'bg-white',
-              isTod ? '!bg-sky-50/30' : '',
-              isDO  ? 'drag-over' : '',
-            )}
-            style={{ verticalAlign: 'top', height: 88 }}
+            className={cn('border-r border-b border-gray-100 align-top', compact ? 'p-1' : 'p-1.5', isWE ? 'bg-gray-50/50' : 'bg-white', isTod ? '!bg-sky-50/30' : '', isDO ? 'drag-over' : '')}
+            style={{ verticalAlign: 'top', height: compact ? 72 : 88 }}
             onDragOver={e => { if (!isWE && canEdit) { e.preventDefault(); setDragOver(ds) } }}
             onDragLeave={() => setDragOver(null)}
             onDrop={e => { e.preventDefault(); setDragOver(null); onDrop(ds, channel) }}
@@ -713,20 +340,11 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
             {!isWE && (
               <>
                 {evs.map(ev => (
-                  <EventCard
-                    key={ev.id}
-                    ev={ev}
-                    status_t={statusT(arr(ev.estado)[0])}
-                    onClick={() => onClickCard(ev)}
-                    onDragStart={() => onDragStart(ev.id)}
-                  />
+                  <EventCard key={ev.id} ev={ev} compact={compact} status_t={statusT(arr(ev.estado)[0])} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} />
                 ))}
                 {canEdit && (
-                  <button
-                    onClick={() => onAdd(channel, ds)}
-                    className="w-full h-5 flex items-center justify-center rounded-lg border border-dashed border-gray-200 text-gray-300 hover:border-sky-300 hover:text-sky-400 transition-colors mt-0.5 opacity-0 group-hover:opacity-100"
-                  >
-                    <Plus className="h-3 w-3" />
+                  <button onClick={() => onAdd(channel, ds)} className={cn('w-full flex items-center justify-center rounded-lg border border-dashed border-gray-200 text-gray-300 hover:border-sky-300 hover:text-sky-400 transition-colors mt-0.5 opacity-0 group-hover:opacity-100', compact ? 'h-4' : 'h-5')}>
+                    <Plus className="h-2.5 w-2.5" />
                   </button>
                 )}
               </>
@@ -735,5 +353,417 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
         )
       })}
     </tr>
+  )
+}
+
+// ── Search results overlay ────────────────────────────────
+function SearchResults({ results, onSelect, onClose, isMobile }) {
+  if (!results.length) return (
+    <div className={cn('absolute z-50 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden', isMobile ? 'left-0 right-0 top-full mt-1' : 'left-0 right-0 top-full mt-1')}>
+      <div className="px-4 py-3 text-xs text-gray-400 text-center">Sin resultados</div>
+    </div>
+  )
+  return (
+    <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+        {results.slice(0, 20).map(ev => {
+          const canal   = arr(ev.canal)[0]
+          const status  = arr(ev.estado)[0]
+          const stMeta  = STATUS_META[status] ?? {}
+          const chMeta  = CHANNEL_META[canal] ?? {}
+          return (
+            <button
+              key={ev.id}
+              onClick={() => { onSelect(ev); onClose() }}
+              className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="flex-shrink-0 mt-0.5">
+                {arr(ev.pais).slice(0, 2).map(p => <span key={p} className="text-sm">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-gray-800 truncate">
+                  {ev.destacado && <span className="text-amber-400 mr-1">★</span>}
+                  {ev.titulo}
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-gray-400">{ev.date}</span>
+                  {canal && (
+                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: chMeta.color ?? '#ccc' }} />
+                      {canal}
+                    </span>
+                  )}
+                  {arr(ev.topico).slice(0, 2).map(t => (
+                    <span key={t} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{t}</span>
+                  ))}
+                </div>
+              </div>
+              <span className="flex-shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: (stMeta.dot ?? '#888') + '22', color: stMeta.dot ?? '#888' }}>
+                {status}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      {results.length > 20 && (
+        <div className="px-4 py-2 text-[10px] text-gray-400 border-t border-gray-50 text-center">
+          {results.length - 20} más — acotar la búsqueda
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Main CalendarPage ─────────────────────────────────────
+export default function CalendarPage() {
+  const { communications, channels, updateComm } = useApp()
+  const { perms, canEditCountry }                = useAuth()
+  const { t, i18n }                             = useTranslation()
+  const isMobile                                 = useIsMobile()
+
+  const [viewMode,     setViewMode]     = useState('week')
+  const [weekStart,    setWeekStart]    = useState(() => getMonday())
+  const [currentMonth, setCurrentMonth] = useState(() => { const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() } })
+  const [filters,      setFilters]      = useState({ pais:[], canal:[], topico:[], segmento:[], estado:[] })
+  const [filtersOpen,  setFiltersOpen]  = useState(false)
+  const [search,       setSearch]       = useState('')
+  const [searchOpen,   setSearchOpen]   = useState(false)
+  const [modal,        setModal]        = useState({ open: false, initial: null })
+  const [dragId,       setDragId]       = useState(null)
+  const searchRef                       = useRef(null)
+
+  const today      = todayStr()
+  const lang       = i18n.language
+  const monthNames = getMonthNames(lang)
+  const dowLabels  = getDowLabels(lang)
+
+  // ── Search filter ─────────────────────────────────────
+  const searchedComms = useMemo(() => {
+    if (!search.trim()) return communications
+    const q = search.toLowerCase()
+    return communications.filter(c =>
+      c.titulo?.toLowerCase().includes(q) ||
+      c.body?.toLowerCase().includes(q) ||
+      arr(c.topico).some(t => t.toLowerCase().includes(q)) ||
+      arr(c.canal).some(ch => ch.toLowerCase().includes(q)) ||
+      arr(c.pais).some(p => (COUNTRY_META[p]?.name ?? p).toLowerCase().includes(q)) ||
+      arr(c.segmento).some(s => s.toLowerCase().includes(q))
+    )
+  }, [communications, search])
+
+  // All 7 days
+  const weekDays    = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
+  const weekDayStrs = useMemo(() => weekDays.map(d => dateStr(d)), [weekDays])
+
+  // Mobile: Mon–Fri only
+  const visWeekDays = useMemo(() =>
+    isMobile ? weekDays.filter(d => d.getDay() !== 0 && d.getDay() !== 6) : weekDays,
+    [weekDays, isMobile]
+  )
+
+  const isThisWeek = weekDayStrs.includes(today)
+
+  // Filter options (from full dataset, not searched — so chips don't disappear mid-type)
+  const paiOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.pais)))].sort(),    [communications])
+  const canalOptions  = useMemo(() => [...new Set(communications.flatMap(c => arr(c.canal)))].sort(),   [communications])
+  const topicoOptions = useMemo(() => [...new Set(communications.flatMap(c => arr(c.topico)))].sort(),  [communications])
+  const segOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.segmento)))].sort(),[communications])
+  const estadoOptions = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
+  const filterOptions = { pais: paiOptions, canal: canalOptions, topico: topicoOptions, segmento: segOptions, estado: estadoOptions }
+
+  const activeFilters = Object.values(filters).reduce((n, v) => n + v.length, 0)
+
+  // Comms after both search + chip filters (for the calendar grid)
+  const weekFiltered = useMemo(() =>
+    searchedComms.filter(ev =>
+      weekDayStrs.includes(ev.date) &&
+      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
+    ),
+    [searchedComms, weekDayStrs, filters]
+  )
+
+  const byDate = useMemo(() => {
+    const map = {}
+    weekFiltered.forEach(ev => { if (!map[ev.date]) map[ev.date] = []; map[ev.date].push(ev) })
+    return map
+  }, [weekFiltered])
+
+  const internalCh  = channels.length > 0 ? channels.filter(c => c.type === 'internal').map(c => c.name) : INTERNAL_CHANNELS
+  const externalCh  = channels.length > 0 ? channels.filter(c => c.type === 'external').map(c => c.name) : EXTERNAL_CHANNELS
+  const allChannels = [...internalCh, ...externalCh]
+  const visChannels = allChannels.filter(ch => filters.canal.length === 0 || filters.canal.includes(ch))
+
+  function prevMonth() { setCurrentMonth(({ year, month }) => month === 0 ? { year: year-1, month: 11 } : { year, month: month-1 }) }
+  function nextMonth() { setCurrentMonth(({ year, month }) => month === 11 ? { year: year+1, month: 0 } : { year, month: month+1 }) }
+
+  function openNew(canal = '', date = '') {
+    setModal({ open: true, initial: { titulo:'', body:'', date, pais:[], canal: canal ? [canal] : [], segmento:[], ubicacion:[], topico:[], formato:[], idioma:[], alcance:['Local'], estado:['Borrador'], destacado:false } })
+  }
+  function openEdit(ev) { setModal({ open: true, initial: ev }) }
+
+  async function handleWeekDrop(ds, ch) {
+    if (!dragId || !perms.canEdit) return
+    const ev = communications.find(c => c.id === dragId)
+    if (!ev || !canEditCountry(arr(ev.pais))) return
+    const newCanal = arr(ev.canal).includes(ch) ? ev.canal : [ch]
+    await updateComm(ev.id, { ...ev, date: ds, canal: newCanal })
+    toast({ title: t('toast.moved'), variant: 'success' })
+    setDragId(null)
+  }
+  async function handleMonthDrop(ds) {
+    if (!dragId || !perms.canEdit) return
+    const ev = communications.find(c => c.id === dragId)
+    if (!ev || !canEditCountry(arr(ev.pais))) return
+    await updateComm(ev.id, { ...ev, date: ds })
+    toast({ title: t('toast.moved'), variant: 'success' })
+    setDragId(null)
+  }
+
+  // Swipe
+  const touchStartX = useRef(null)
+  function onTouchStart(e) { touchStartX.current = e.touches[0].clientX }
+  function onTouchEnd(e) {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (Math.abs(dx) < 40) return
+    if (dx > 0) setWeekStart(w => addDays(w, -7))
+    else        setWeekStart(w => addDays(w, 7))
+    touchStartX.current = null
+  }
+
+  function clearAll() {
+    setFilters({ pais:[], canal:[], topico:[], segmento:[], estado:[] })
+    setSearch('')
+    setSearchOpen(false)
+  }
+
+  const chColW = isMobile ? 50 : 80
+  const hasAnyFilter = activeFilters > 0 || search.trim().length > 0
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden bg-white">
+
+      {/* ── Toolbar ── */}
+      <div className="border-b border-gray-100 bg-white flex-shrink-0">
+
+        {/* Row 1: navigation + view toggle + actions */}
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          {/* Nav */}
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => viewMode === 'week' ? setWeekStart(w => addDays(w, -7)) : prevMonth()} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              <ChevronLeft className="h-4 w-4 text-gray-400" />
+            </button>
+            <span className={cn('font-semibold text-gray-800 px-1.5 text-center select-none', isMobile ? 'text-xs min-w-[100px]' : 'text-sm min-w-[200px]')}>
+              {viewMode === 'week' ? weekLabel(weekStart, lang, isMobile) : `${monthNames[currentMonth.month]} ${currentMonth.year}`}
+            </span>
+            <button onClick={() => viewMode === 'week' ? setWeekStart(w => addDays(w, 7)) : nextMonth()} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </button>
+          </div>
+
+          {viewMode === 'week' && !isThisWeek && (
+            <button onClick={() => setWeekStart(getMonday())} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+              <CalendarDays className="h-3 w-3" />
+              {!isMobile && t('calendar.today')}
+            </button>
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            {/* Toggle semana/mes */}
+            <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs">
+              <button onClick={() => setViewMode('week')} className={cn('px-2.5 py-1.5 transition-colors', viewMode === 'week' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
+                {isMobile ? '7d' : 'Semana'}
+              </button>
+              <button onClick={() => setViewMode('month')} className={cn('px-2.5 py-1.5 transition-colors border-l border-gray-200', viewMode === 'month' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
+                Mes
+              </button>
+            </div>
+
+            {!isMobile && perms.canEdit && (
+              <Button size="sm" onClick={() => openNew()}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> {t('calendar.new')}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Search + filter toggle */}
+        <div className="flex items-center gap-2 px-3 pb-2.5">
+          {/* Search bar */}
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setSearchOpen(e.target.value.length > 0) }}
+              onFocus={() => search.length > 0 && setSearchOpen(true)}
+              onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+              placeholder="Buscar comms, tópico, canal..."
+              className="w-full pl-8 pr-7 h-8 text-xs border border-gray-200 rounded-full bg-gray-50 focus:bg-white focus:border-sky-300 focus:ring-1 focus:ring-sky-200 outline-none transition-all"
+            />
+            {search && (
+              <button onClick={() => { setSearch(''); setSearchOpen(false) }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {/* Search results dropdown */}
+            {searchOpen && search.trim() && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-50">
+                <SearchResults
+                  results={searchedComms}
+                  onSelect={ev => {
+                    // Navigate to the week containing this event and open it
+                    const evDate = new Date(ev.date + 'T00:00:00')
+                    setWeekStart(getMonday(evDate))
+                    setViewMode('week')
+                    setTimeout(() => openEdit(ev), 50)
+                  }}
+                  onClose={() => setSearchOpen(false)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Filter toggle button */}
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            className={cn(
+              'flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors flex-shrink-0',
+              filtersOpen || activeFilters > 0
+                ? 'bg-sky-50 border-sky-200 text-sky-700 font-semibold'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            )}
+          >
+            <SlidersHorizontal className="h-3 w-3" />
+            {!isMobile && <span>Filtrar</span>}
+            {activeFilters > 0 && (
+              <span className="bg-sky-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>
+            )}
+            <span className="text-[9px] opacity-40">{filtersOpen ? '▴' : '▾'}</span>
+          </button>
+
+          {/* Active filter chips summary */}
+          {activeFilters > 0 && !isMobile && (
+            <div className="flex items-center gap-1 flex-wrap">
+              {FILTER_KEYS.flatMap(fd =>
+                filters[fd.key].map(v => (
+                  <span key={`${fd.key}-${v}`} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                    {COUNTRY_META[v]?.flag ? `${COUNTRY_META[v].flag} ` : ''}{v}
+                    <button onClick={() => setFilters(f => ({ ...f, [fd.key]: f[fd.key].filter(x => x !== v) }))} className="hover:text-sky-900">
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
+          )}
+
+          {hasAnyFilter && (
+            <button onClick={clearAll} className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 flex-shrink-0 ml-auto">
+              <X className="h-2.5 w-2.5" /> Limpiar
+            </button>
+          )}
+        </div>
+
+        {/* Expandable chip filter panel */}
+        {filtersOpen && (
+          <div className="px-3 pb-3 pt-1 border-t border-gray-50 space-y-2">
+            <FilterRow
+              label="País" options={paiOptions} value={filters.pais}
+              onChange={v => setFilters(f => ({ ...f, pais: v }))}
+              renderChip={p => `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`}
+            />
+            <FilterRow label="Canal"    options={canalOptions}   value={filters.canal}    onChange={v => setFilters(f => ({ ...f, canal: v }))} />
+            <FilterRow label="Estado"   options={estadoOptions}  value={filters.estado}   onChange={v => setFilters(f => ({ ...f, estado: v }))} />
+            <FilterRow label="Tópico"   options={topicoOptions}  value={filters.topico}   onChange={v => setFilters(f => ({ ...f, topico: v }))} />
+            <FilterRow label="Segmento" options={segOptions}     value={filters.segmento} onChange={v => setFilters(f => ({ ...f, segmento: v }))} />
+          </div>
+        )}
+      </div>
+
+      {/* Alert */}
+      {viewMode === 'week' && <CountryAlert comms={searchedComms} dateStrs={weekDayStrs} />}
+
+      {/* ── Calendar content ── */}
+      <div className="flex-1 overflow-hidden" onTouchStart={viewMode === 'week' ? onTouchStart : undefined} onTouchEnd={viewMode === 'week' ? onTouchEnd : undefined}>
+        {viewMode === 'week' ? (
+          <div className="h-full overflow-auto">
+            <table className="border-collapse" style={{ minWidth: isMobile ? '100%' : 480, width: '100%', tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: chColW, minWidth: chColW }} />
+                {visWeekDays.map((_, i) => <col key={i} />)}
+              </colgroup>
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr>
+                  <th className="border-b border-r border-gray-100 bg-gray-50/40 px-1 py-2" />
+                  {visWeekDays.map(d => {
+                    const ds   = dateStr(d)
+                    const dow  = d.getDay()
+                    const isWE = dow === 0 || dow === 6
+                    const isTod = ds === today
+                    return (
+                      <th key={ds} className={cn('border-b border-r border-gray-100 px-1 py-2 text-center font-normal', isWE ? 'bg-gray-50/60' : 'bg-white', isTod ? '!bg-sky-50 !border-b-2 !border-b-sky-400' : '')}>
+                        <div className={cn('text-[10px] uppercase tracking-widest mb-0.5', isTod ? 'text-sky-500 font-bold' : 'text-gray-400')}>{dowLabels[dow]}</div>
+                        <div className={cn('font-bold mx-auto rounded-full flex items-center justify-center', isMobile ? 'text-xs w-6 h-6' : 'text-sm w-7 h-7', isTod ? 'bg-sky-500 text-white' : isWE ? 'text-gray-300' : 'text-gray-800')}>
+                          {d.getDate()}
+                        </div>
+                      </th>
+                    )
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colSpan={visWeekDays.length + 1} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">{t('calendar.internalChannels')}</td></tr>
+                {internalCh.filter(ch => visChannels.includes(ch)).map(ch => (
+                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} />
+                ))}
+                <tr><td colSpan={visWeekDays.length + 1} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">{t('calendar.externalChannels')}</td></tr>
+                {externalCh.filter(ch => visChannels.includes(ch)).map(ch => (
+                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} />
+                ))}
+              </tbody>
+            </table>
+
+            {/* Search highlight banner */}
+            {search.trim() && (
+              <div className="px-4 py-2 text-xs text-sky-600 bg-sky-50 border-t border-sky-100">
+                Mostrando {weekFiltered.length} resultado{weekFiltered.length !== 1 ? 's' : ''} para <strong>"{search}"</strong> esta semana
+              </div>
+            )}
+
+            {!isMobile && (
+              <div className="flex flex-wrap gap-3 px-4 py-3 text-xs text-gray-400 border-t border-gray-100">
+                {allChannels.map(ch => (
+                  <span key={ch} className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: CHANNEL_META[ch]?.color ?? '#ccc' }} />
+                    <span className="text-gray-500">{ch}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <MonthView
+            year={currentMonth.year} month={currentMonth.month}
+            communications={searchedComms} filters={filters} today={today} lang={lang}
+            canEdit={perms.canEdit} onClickCard={openEdit} onAdd={ds => openNew('', ds)}
+            onDragStart={id => setDragId(id)} onDrop={handleMonthDrop}
+          />
+        )}
+      </div>
+
+      {/* FAB mobile */}
+      {isMobile && perms.canEdit && (
+        <button
+          onClick={() => openNew()}
+          className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-sky-500 text-white shadow-lg hover:bg-sky-600 active:scale-95 transition-all flex items-center justify-center"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      )}
+
+      <CommModal open={modal.open} initial={modal.initial} onClose={() => setModal({ open: false, initial: null })} />
+    </div>
   )
 }
