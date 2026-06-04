@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "cal":   "Calendar",
+    "an":    "Analytics",
+    "data":  "Data Master",
+    "map":   "Global Admin",
+    "admin": "Administration"
+  },
+  "sidebar": {
+    "subtitle": "Global 2026",
+    "signOut":  "Sign out"
+  },
+  "calendar": {
+    "internalChannels": "Internal Channels",
+    "externalChannels": "External Channels",
+    "today": "Today",
+    "new":   "New",
+    "comms": "comms"
+  },
+  "filter": {
+    "country":  "Country",
+    "channel":  "Channel",
+    "topic":    "Topic",
+    "segment":  "Segment",
+    "status":   "Status",
+    "clear":    "Clear"
+  },
+  "status": {
+    "Aprobado":    "Approved",
+    "En revisión": "In Review",
+    "Borrador":    "Draft",
+    "Publicado":   "Published",
+    "Cancelado":   "Cancelled"
+  },
+  "modal": {
+    "newTitle":         "New communication",
+    "editTitle":        "Edit",
+    "titulo":           "Title",
+    "body":             "Brief / Copy",
+    "bodyPlaceholder":  "Write the content or brief for this communication...",
+    "date":             "Date",
+    "estado":           "Status",
+    "pais":             "Country / Unit",
+    "canal":            "Channel",
+    "segmento":         "Segment",
+    "topico":           "Topic",
+    "formato":          "Format",
+    "alcance":          "Scope",
+    "idioma":           "Language",
+    "ubicacion":        "Location",
+    "destacado":        "Featured",
+    "notFeatured":      "Not featured",
+    "save":             "Save",
+    "saving":           "Saving...",
+    "cancel":           "Cancel",
+    "delete":           "Delete",
+    "created":          "Created",
+    "modified":         "Modified",
+    "selectPlaceholder":"Select..."
+  },
+  "toast": {
+    "moved":         "Communication moved ✓",
+    "created":       "Communication created ✓",
+    "saved":         "Saved ✓",
+    "deleted":       "Deleted",
+    "saveError":     "Error saving",
+    "deleteError":   "Error deleting",
+    "titleRequired": "Title is required",
+    "dateRequired":  "Date is required"
+  },
+  "lang": {
+    "es": "ES",
+    "en": "EN",
+    "pt": "PT"
+  },
+  "page": {
+    "cal":   "Calendar",
+    "an":    "Analytics",
+    "data":  "Data Master",
+    "map":   "Global Admin",
+    "admin": "Administration"
+  }
+}

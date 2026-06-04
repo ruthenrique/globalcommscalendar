@@ -1,0 +1,337 @@
+import { useEffect, useState } from 'react'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useTranslation } from 'react-i18next'
+import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { COUNTRY_META, FORMAT_ICON, PAIS_IDIOMA } from '@/lib/constants'
+import { arr, formatDateTime } from '@/lib/utils'
+import { toast } from '@/components/layout/Toaster'
+
+function MultiSelect({ label, options, value, onChange, getLabel, getKey, colorFn }) {
+  const vals = arr(value)
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground uppercase tracking-wider">{label}</Label>
+      <div className="mt-1 flex flex-wrap gap-1.5 p-2 border rounded-md bg-muted/30 min-h-[36px]">
+        {options.map(opt => {
+          const key = getKey ? getKey(opt) : opt
+          const lbl = getLabel ? getLabel(opt) : opt
+          const sel = vals.includes(key)
+          const col = colorFn ? colorFn(key) : undefined
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onChange(sel ? vals.filter(v => v !== key) : [...vals, key])}
+              className="text-xs px-2 py-0.5 rounded-full border transition-all font-medium"
+              style={sel
+                ? col
+                  ? { background: col + '22', borderColor: col, color: col }
+                  : { background: '#EFF6FF', borderColor: '#BAE6FD', color: '#0369A1' }
+                : { background: 'white', borderColor: '#e2e8f0', color: '#64748b' }
+              }
+            >
+              {lbl}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function SingleSelect({ label, options, value, onChange, getLabel, getKey, placeholder }) {
+  const vals = arr(value)
+  const cur  = vals[0] ?? ''
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground uppercase tracking-wider">{label}</Label>
+      <select
+        value={cur}
+        onChange={e => onChange([e.target.value].filter(Boolean))}
+        className="mt-1 w-full text-sm border rounded-md px-2 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+      >
+        <option value="">{placeholder ?? '–'}</option>
+        {options.map(opt => {
+          const key = getKey ? getKey(opt) : opt
+          const lbl = getLabel ? getLabel(opt) : opt
+          return <option key={key} value={key}>{lbl}</option>
+        })}
+      </select>
+    </div>
+  )
+}
+
+export default function CommModal({ open, onClose, initial = null }) {
+  const { countries, channels, categories, segments, settings, createComm, updateComm, deleteComm } = useApp()
+  const { canEditCountry, role, loading: authLoading } = useAuth()
+  const { t } = useTranslation()
+
+  const isNew = !initial?.id
+
+  const empty = {
+    titulo: '', body: '', date: '',
+    pais: [], canal: [], segmento: [], ubicacion: [],
+    topico: [], formato: [], idioma: [], alcance: ['Local'],
+    estado: ['Borrador'], destacado: false,
+  }
+
+  const [form, setForm]       = useState(empty)
+  const [saving, setSaving]   = useState(false)
+  const [langAlert, setLangAlert] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setForm({ ...empty, ...initial })
+      setLangAlert('')
+    }
+  }, [open, initial])
+
+  useEffect(() => {
+    const p = arr(form.pais)[0]
+    const i = arr(form.idioma)[0]
+    const expected = PAIS_IDIOMA[p]
+    if (p && i && expected && i !== expected) {
+      setLangAlert(`⚠️ ${p} normalmente usa ${expected}, seleccionaste ${i}`)
+    } else {
+      setLangAlert('')
+    }
+  }, [form.pais, form.idioma])
+
+  function set(field, val) {
+    setForm(f => ({ ...f, [field]: val }))
+  }
+
+  async function handleSave() {
+    if (!form.titulo.trim()) return toast({ title: t('toast.titleRequired'), variant: 'destructive' })
+    if (!form.date)          return toast({ title: t('toast.dateRequired'),  variant: 'destructive' })
+    setSaving(true)
+    const payload = { ...form }
+    const { error } = isNew ? await createComm(payload) : await updateComm(initial.id, payload)
+    setSaving(false)
+    if (error) {
+      toast({ title: t('toast.saveError'), description: error.message, variant: 'destructive' })
+    } else {
+      toast({ title: isNew ? t('toast.created') : t('toast.saved'), variant: 'success' })
+      onClose()
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm('¿Eliminar esta comunicación?')) return
+    const { error } = await deleteComm(initial.id)
+    if (error) toast({ title: t('toast.deleteError'), variant: 'destructive' })
+    else { toast({ title: t('toast.deleted'), variant: 'success' }); onClose() }
+  }
+
+  const canDelete   = role === 'super_admin'
+  const countryList = countries.length > 0 ? countries : Object.keys(COUNTRY_META).map(k => ({ code: k, ...COUNTRY_META[k] }))
+  const channelList = channels.length > 0 ? channels : []
+  const categoryList = categories.length > 0 ? categories : []
+  const segmentList  = segments.length > 0  ? segments  : []
+  const idiomas      = settings.idiomas   ?? ['Español','Portugués','Inglés']
+  const alcances     = settings.alcances  ?? ['Global','Local']
+  const ubicaciones  = settings.ubicaciones ?? ['Oficina','Operaciones']
+  const formatos     = settings.formatos  ?? ['Email','Post','Video','Encuesta','Carrusel']
+  const estados      = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
+
+  const editable = authLoading || isNew || canEditCountry(arr(form.pais))
+
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Drag handle — solo mobile */}
+        <div className="sm:hidden w-10 h-1 rounded-full bg-gray-200 mx-auto -mt-1 mb-3" />
+
+        <DialogHeader>
+          <DialogTitle className="text-base">
+            {isNew ? t('modal.newTitle') : `${t('modal.editTitle')} · #${initial?.id}`}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          {/* Título */}
+          <div className="col-span-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">{t('modal.titulo')}</Label>
+            <Input
+              value={form.titulo}
+              onChange={e => set('titulo', e.target.value)}
+              placeholder={t('modal.titulo')}
+              className="mt-1"
+              disabled={!editable}
+            />
+          </div>
+
+          {/* Brief / Body */}
+          <div className="col-span-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">{t('modal.body')}</Label>
+            <textarea
+              value={form.body ?? ''}
+              onChange={e => set('body', e.target.value)}
+              placeholder={t('modal.bodyPlaceholder')}
+              rows={4}
+              disabled={!editable}
+              className="mt-1 w-full text-sm border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary resize-none placeholder:text-muted-foreground/40 disabled:opacity-60"
+            />
+          </div>
+
+          {/* Fecha */}
+          <div>
+            <Label className="text-xs text-muted-foreground uppercase tracking-wider">{t('modal.date')}</Label>
+            <Input
+              type="date"
+              value={form.date}
+              onChange={e => set('date', e.target.value)}
+              className="mt-1"
+              disabled={!editable}
+            />
+          </div>
+
+          {/* Estado */}
+          <SingleSelect
+            label={t('modal.estado')}
+            options={estados}
+            value={form.estado}
+            onChange={v => set('estado', v)}
+            placeholder={t('modal.selectPlaceholder')}
+          />
+
+          {/* País */}
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.pais')}
+              options={countryList}
+              value={form.pais}
+              onChange={v => set('pais', v)}
+              getKey={c => c.code ?? c}
+              getLabel={c => `${c.flag ?? COUNTRY_META[c.code ?? c]?.flag ?? ''} ${c.name ?? c.code ?? c}`}
+              colorFn={k => COUNTRY_META[k]?.color}
+            />
+          </div>
+
+          {/* Canal */}
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.canal')}
+              options={channelList.length > 0 ? channelList.map(c => c.name) : Object.keys({ Emarsys:1, Humand:1, 'Cartelera Digital':1, LinkedIn:1, TikTok:1, Instagram:1 })}
+              value={form.canal}
+              onChange={v => set('canal', v)}
+            />
+          </div>
+
+          {/* Segmento */}
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.segmento')}
+              options={segmentList.length > 0 ? segmentList.map(s => s.name) : ['Staff','Tiendas Isadora','TM','Atelier','TMB','Logística','Producción','Staff Retail']}
+              value={form.segmento}
+              onChange={v => set('segmento', v)}
+            />
+          </div>
+
+          {/* Tópico */}
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.topico')}
+              options={categoryList.length > 0 ? categoryList.map(c => c.name) : ['Cultura','Bienestar','Innovación','DEI','Campaña','Org','Beneficios','Talento','Escucha','Formación','Marca','Operaciones','Gestión']}
+              value={form.topico}
+              onChange={v => set('topico', v)}
+              colorFn={k => categoryList.find(c => c.name === k)?.color ?? '#888'}
+            />
+          </div>
+
+          {/* Formato */}
+          <SingleSelect
+            label={t('modal.formato')}
+            options={formatos}
+            value={form.formato}
+            onChange={v => set('formato', v)}
+            placeholder={t('modal.selectPlaceholder')}
+          />
+
+          {/* Alcance */}
+          <SingleSelect
+            label={t('modal.alcance')}
+            options={alcances}
+            value={form.alcance}
+            onChange={v => set('alcance', v)}
+            placeholder={t('modal.selectPlaceholder')}
+          />
+
+          {/* Idioma */}
+          <SingleSelect
+            label={t('modal.idioma')}
+            options={idiomas}
+            value={form.idioma}
+            onChange={v => set('idioma', v)}
+            placeholder={t('modal.selectPlaceholder')}
+          />
+
+          {/* Ubicación */}
+          <SingleSelect
+            label={t('modal.ubicacion')}
+            options={ubicaciones}
+            value={form.ubicacion}
+            onChange={v => set('ubicacion', v)}
+            placeholder={t('modal.selectPlaceholder')}
+          />
+
+          {/* Destacado */}
+          <div className="col-span-2 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => editable && set('destacado', !form.destacado)}
+              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative ${form.destacado ? 'bg-primary' : 'bg-gray-200'}`}
+              disabled={!editable}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white shadow absolute top-0.5 transition-all ${form.destacado ? 'left-5' : 'left-0.5'}`} />
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {form.destacado ? t('modal.destacado') : t('modal.notFeatured')}
+            </span>
+          </div>
+        </div>
+
+        {/* Language alert */}
+        {langAlert && (
+          <div className="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-3 text-sm text-amber-800">
+            {langAlert}
+          </div>
+        )}
+
+        {/* Audit info */}
+        {initial?.created_at && (
+          <div className="text-xs text-muted-foreground border-t pt-3 space-y-0.5">
+            <div>{t('modal.created')}: {formatDateTime(initial.created_at)}</div>
+            {initial.updated_at !== initial.created_at && (
+              <div>{t('modal.modified')}: {formatDateTime(initial.updated_at)}</div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="flex justify-between">
+          <div>
+            {!isNew && canDelete && (
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                {t('modal.delete')}
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>{t('modal.cancel')}</Button>
+            {editable && (
+              <Button size="sm" onClick={handleSave} disabled={saving}>
+                {saving ? t('modal.saving') : t('modal.save')}
+              </Button>
+            )}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "cal":   "Calendario",
+    "an":    "Analytics",
+    "data":  "Data Master",
+    "map":   "Admin Global",
+    "admin": "Administración"
+  },
+  "sidebar": {
+    "subtitle": "Global 2026",
+    "signOut":  "Cerrar sesión"
+  },
+  "calendar": {
+    "internalChannels": "Canales Internos",
+    "externalChannels": "Canales Externos",
+    "today": "Hoy",
+    "new":   "Nueva",
+    "comms": "comms"
+  },
+  "filter": {
+    "country":  "País",
+    "channel":  "Canal",
+    "topic":    "Tópico",
+    "segment":  "Segmento",
+    "status":   "Estado",
+    "clear":    "Limpiar"
+  },
+  "status": {
+    "Aprobado":    "Aprobado",
+    "En revisión": "En revisión",
+    "Borrador":    "Borrador",
+    "Publicado":   "Publicado",
+    "Cancelado":   "Cancelado"
+  },
+  "modal": {
+    "newTitle":         "Nueva comunicación",
+    "editTitle":        "Editar",
+    "titulo":           "Título",
+    "body":             "Brief / Copy",
+    "bodyPlaceholder":  "Escribí el contenido o brief de la comunicación...",
+    "date":             "Fecha",
+    "estado":           "Estado",
+    "pais":             "País / Unidad",
+    "canal":            "Canal",
+    "segmento":         "Segmento",
+    "topico":           "Tópico",
+    "formato":          "Formato",
+    "alcance":          "Alcance",
+    "idioma":           "Idioma",
+    "ubicacion":        "Ubicación",
+    "destacado":        "Destacado",
+    "notFeatured":      "Sin destacar",
+    "save":             "Guardar",
+    "saving":           "Guardando...",
+    "cancel":           "Cancelar",
+    "delete":           "Eliminar",
+    "created":          "Creado",
+    "modified":         "Modificado",
+    "selectPlaceholder":"Seleccionar..."
+  },
+  "toast": {
+    "moved":         "Comunicación movida ✓",
+    "created":       "Comunicación creada ✓",
+    "saved":         "Guardado ✓",
+    "deleted":       "Eliminado",
+    "saveError":     "Error al guardar",
+    "deleteError":   "Error al eliminar",
+    "titleRequired": "El título es requerido",
+    "dateRequired":  "La fecha es requerida"
+  },
+  "lang": {
+    "es": "ES",
+    "en": "EN",
+    "pt": "PT"
+  },
+  "page": {
+    "cal":   "Calendario",
+    "an":    "Analytics",
+    "data":  "Data Master",
+    "map":   "Admin Global",
+    "admin": "Administración"
+  }
+}
