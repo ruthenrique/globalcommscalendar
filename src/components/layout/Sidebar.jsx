@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import {
   Calendar, BarChart2, Table2, Globe2, Settings,
-  ChevronLeft, ChevronRight, LogOut,
+  ChevronLeft, ChevronRight, LogOut, KeyRound,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
+import { toast } from '@/components/layout/Toaster'
 import { ROLE_META, NAV_ITEMS } from '@/lib/constants'
 
 const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
@@ -13,6 +15,20 @@ const LANGS = ['es', 'en', 'pt']
 
 export default function Sidebar({ activeTab, onTabChange }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [changePw, setChangePw] = useState(false)
+  const [pwForm, setPwForm] = useState({ pw: '', pw2: '' })
+
+  async function handleChangePw() {
+    if (pwForm.pw.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
+    if (pwForm.pw !== pwForm.pw2) return toast({ title: 'Las contraseñas no coinciden', variant: 'destructive' })
+    const { error } = await supabase.auth.updateUser({ password: pwForm.pw })
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    else {
+      toast({ title: 'Contraseña actualizada ✓', variant: 'success' })
+      setChangePw(false)
+      setPwForm({ pw: '', pw2: '' })
+    }
+  }
   const { profile, role, signOut }  = useAuth()
   const { t, i18n }                 = useTranslation()
   const perms = ROLE_META[role] ?? ROLE_META.viewer
@@ -121,6 +137,39 @@ export default function Sidebar({ activeTab, onTabChange }) {
             </div>
           )}
         </div>
+        {changePw && !collapsed && (
+          <div className="px-2.5 py-2 space-y-1.5">
+            <input
+              type="password"
+              placeholder="Nueva contraseña"
+              value={pwForm.pw}
+              onChange={e => setPwForm(f => ({ ...f, pw: e.target.value }))}
+              className="w-full text-xs border rounded px-2 py-1 h-7"
+            />
+            <input
+              type="password"
+              placeholder="Repetir contraseña"
+              value={pwForm.pw2}
+              onChange={e => setPwForm(f => ({ ...f, pw2: e.target.value }))}
+              className="w-full text-xs border rounded px-2 py-1 h-7"
+            />
+            <div className="flex gap-1">
+              <button onClick={handleChangePw} className="flex-1 text-[10px] bg-primary text-white rounded px-2 py-1">Guardar</button>
+              <button onClick={() => { setChangePw(false); setPwForm({ pw: '', pw2: '' }) }} className="flex-1 text-[10px] border rounded px-2 py-1">Cancelar</button>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => setChangePw(v => !v)}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+            collapsed && 'justify-center'
+          )}
+          title="Cambiar contraseña"
+        >
+          <KeyRound className="h-3.5 w-3.5 flex-shrink-0" />
+          {!collapsed && 'Cambiar contraseña'}
+        </button>
         <button
           onClick={signOut}
           className={cn(

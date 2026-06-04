@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +25,20 @@ function UsersPanel() {
   const [users, setUsers]     = useState([])
   const [editing, setEditing] = useState(null)
   const [form, setForm]       = useState({})
+  const [resetPw, setResetPw] = useState({ email: null, value: '' })
+
+  async function handleResetPw() {
+    if (resetPw.value.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
+    const { error } = await supabase.rpc('admin_reset_password', {
+      p_email: resetPw.email,
+      p_new_password: resetPw.value,
+    })
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' })
+    else {
+      toast({ title: 'Contraseña reseteada ✓', variant: 'success' })
+      setResetPw({ email: null, value: '' })
+    }
+  }
 
   useEffect(() => {
     supabase.from('profiles').select('*').order('name').then(({ data }) => data && setUsers(data))
@@ -74,10 +88,30 @@ function UsersPanel() {
                     ))}
                   </div>
                 </div>
-                <button onClick={() => { setEditing(u.id); setForm({ ...u }) }} className="p-1.5 rounded hover:bg-muted text-muted-foreground">
-                  <Edit2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex gap-1">
+                  {role === 'super_admin' && (
+                    <button onClick={() => setResetPw(r => r.email === u.email ? { email: null, value: '' } : { email: u.email, value: '' })} className="p-1.5 rounded hover:bg-muted text-muted-foreground" title="Reset contraseña">
+                      <KeyRound className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button onClick={() => { setEditing(u.id); setForm({ ...u }) }} className="p-1.5 rounded hover:bg-muted text-muted-foreground">
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
+              {resetPw.email === u.email && (
+                <div className="mt-3 pt-3 border-t flex gap-2 items-center">
+                  <input
+                    type="password"
+                    placeholder="Nueva contraseña"
+                    value={resetPw.value}
+                    onChange={e => setResetPw(r => ({ ...r, value: e.target.value }))}
+                    className="flex-1 text-xs border rounded px-2 py-1 h-7"
+                  />
+                  <Button size="sm" onClick={handleResetPw} className="h-7 text-xs">Guardar</Button>
+                  <Button size="sm" variant="outline" onClick={() => setResetPw({ email: null, value: '' })} className="h-7 text-xs">Cancelar</Button>
+                </div>
+              )}
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
