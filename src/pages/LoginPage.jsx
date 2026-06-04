@@ -29,115 +29,117 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background: '#0d0d1a',
-        backgroundImage: `
-          radial-gradient(at 15% 20%, hsla(270,80%,60%,0.55) 0px, transparent 50%),
-          radial-gradient(at 85% 10%, hsla(200,90%,55%,0.45) 0px, transparent 50%),
-          radial-gradient(at 75% 80%, hsla(320,70%,55%,0.45) 0px, transparent 50%),
-          radial-gradient(at 10% 85%, hsla(240,85%,65%,0.4) 0px, transparent 50%),
-          radial-gradient(at 50% 50%, hsla(170,60%,50%,0.2) 0px, transparent 60%)
-        `,
-      }}
-    >
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-white flex flex-col">
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-            <span className="text-white font-bold text-base">G</span>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-sm bg-gray-900 flex items-center justify-center">
+            <span className="text-white text-[9px] font-black tracking-tight">GCH</span>
           </div>
           <div>
-            <div className="text-white font-semibold text-base tracking-tight">Global Comms Hub</div>
-            <div className="text-white/40 text-xs">BSG</div>
+            <div className="text-sm font-black text-gray-900 tracking-tight leading-none">Global Comms Hub</div>
+            <div className="text-[9px] text-gray-400 uppercase tracking-widest mt-0.5">BSG</div>
           </div>
         </div>
+        <div className="text-[10px] text-gray-400 uppercase tracking-widest hidden sm:block">
+          Internal Communications Platform
+        </div>
+      </div>
 
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/15">
+      {/* Main */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm">
+
           {mode === 'confirm' ? (
-            <div className="text-center py-4">
-              <div className="text-4xl mb-3">📧</div>
-              <h1 className="text-base font-semibold mb-2 text-white">Revisá tu email</h1>
-              <p className="text-sm text-white/60 mb-4">
-                Te enviamos un link de confirmación a <strong className="text-white/80">{email}</strong>.
+            <div className="text-center py-12">
+              <div className="text-4xl mb-6">📧</div>
+              <h1 className="text-xl font-black text-gray-900 mb-2 tracking-tight">Revisá tu email</h1>
+              <p className="text-sm text-gray-500 mb-8">
+                Enviamos un link de confirmación a <span className="text-gray-900 font-medium">{email}</span>.
               </p>
-              <button onClick={() => setMode('login')} className="text-white/60 text-sm hover:text-white transition-colors">
+              <button onClick={() => setMode('login')} className="text-xs text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">
                 ← Volver
               </button>
             </div>
           ) : (
-          <>
-            <h1 className="text-lg font-semibold text-white mb-0.5">
-              {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-            </h1>
-            <p className="text-xs text-white/50 mb-5">
-              {mode === 'login' ? 'Ingresá tus credenciales para continuar' : 'Completá los datos para registrarte'}
-            </p>
+            <>
+              {/* Heading */}
+              <div className="mb-10">
+                <div className="w-8 h-px bg-gray-900 mb-6" />
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
+                  {mode === 'login' ? 'Iniciar\nsesión' : 'Crear\ncuenta'}
+                </h1>
+              </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'signup' && (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {mode === 'signup' && (
+                  <div>
+                    <Label htmlFor="name" className="text-[10px] text-gray-400 uppercase tracking-widest">Nombre completo</Label>
+                    <Input
+                      id="name" value={name} onChange={e => setName(e.target.value)}
+                      placeholder="Ana García" required
+                      className="mt-2 h-10 text-sm border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-gray-900 bg-transparent placeholder:text-gray-300"
+                    />
+                  </div>
+                )}
                 <div>
-                  <Label htmlFor="name" className="text-xs text-white/70">Nombre completo</Label>
+                  <Label htmlFor="email" className="text-[10px] text-gray-400 uppercase tracking-widest">Email</Label>
                   <Input
-                    id="name" value={name} onChange={e => setName(e.target.value)}
-                    placeholder="Ana García" required
-                    className="mt-1 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-white/10"
+                    id="email" type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="tu@empresa.com" required
+                    className="mt-2 h-10 text-sm border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-gray-900 bg-transparent placeholder:text-gray-300"
                   />
                 </div>
-              )}
-              <div>
-                <Label htmlFor="email" className="text-xs text-white/70">Email</Label>
-                <Input
-                  id="email" type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="tu@empresa.com" required
-                  className="mt-1 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-white/10"
-                />
-              </div>
-              <div>
-                <Label htmlFor="password" className="text-xs text-white/70">Contraseña</Label>
-                <Input
-                  id="password" type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" required
-                  className="mt-1 h-9 text-sm bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-white/10"
-                />
-              </div>
-
-              {error && (
-                <div className="text-xs text-red-300 bg-red-500/15 border border-red-400/20 rounded-lg px-3 py-2">
-                  {error}
+                <div>
+                  <Label htmlFor="password" className="text-[10px] text-gray-400 uppercase tracking-widest">Contraseña</Label>
+                  <Input
+                    id="password" type="password" value={password} onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••" required
+                    className="mt-2 h-10 text-sm border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-gray-900 bg-transparent placeholder:text-gray-300"
+                  />
                 </div>
-              )}
 
-              <Button
-                type="submit"
-                className="w-full h-9 text-sm bg-white text-slate-900 hover:bg-white/90 font-medium"
-                disabled={loading}
-              >
-                {loading ? 'Cargando...' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}
-              </Button>
-            </form>
+                {error && (
+                  <div className="text-xs text-red-500 py-2 border-l-2 border-red-500 pl-3">
+                    {error}
+                  </div>
+                )}
 
-            <div className="mt-4 text-center text-xs text-white/40">
-              {mode === 'login' ? (
-                <>¿No tenés cuenta?{' '}
-                  <button onClick={() => setMode('signup')} className="text-white/70 hover:text-white transition-colors">Registrate</button>
-                </>
-              ) : (
-                <>¿Ya tenés cuenta?{' '}
-                  <button onClick={() => setMode('login')} className="text-white/70 hover:text-white transition-colors">Iniciá sesión</button>
-                </>
-              )}
-            </div>
-          </>
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-sm bg-gray-900 hover:bg-black text-white rounded-none font-semibold tracking-wide"
+                    disabled={loading}
+                  >
+                    {loading ? 'Cargando...' : mode === 'login' ? 'Ingresar' : 'Crear cuenta'}
+                  </Button>
+                </div>
+              </form>
+
+              <div className="mt-6 text-xs text-gray-400 text-center">
+                {mode === 'login' ? (
+                  <>¿No tenés cuenta?{' '}
+                    <button onClick={() => setMode('signup')} className="text-gray-900 hover:underline underline-offset-2">Registrate</button>
+                  </>
+                ) : (
+                  <>¿Ya tenés cuenta?{' '}
+                    <button onClick={() => setMode('login')} className="text-gray-900 hover:underline underline-offset-2">Iniciá sesión</button>
+                  </>
+                )}
+              </div>
+            </>
           )}
         </div>
+      </div>
 
-        <p className="text-center text-xs text-white/25 mt-6">
-          Global Comms Hub · BSG
+      {/* Footer */}
+      <div className="px-8 py-5 border-t border-gray-100">
+        <p className="text-[10px] text-gray-300 uppercase tracking-widest text-center">
+          Global Comms Hub · BSG · Internal use only
         </p>
       </div>
+
     </div>
   )
 }
