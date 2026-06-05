@@ -610,6 +610,31 @@ export default function CalendarPage() {
     return map
   }, [searchedComms])
 
+  // Saturation map: date → [{flag, name, n}] for countries with >3 comms that day
+  const satByDate = useMemo(() => {
+    const intC = {}, extC = {}
+    weekFiltered.forEach(ev => {
+      const chs    = arr(ev.canal)
+      const hasInt = chs.some(c => INT_SET.has(c))
+      const hasExt = chs.some(c => EXT_SET.has(c))
+      arr(ev.pais).forEach(p => {
+        const k = `${p}||${ev.date}`
+        if (hasInt) intC[k] = (intC[k] ?? 0) + 1
+        if (hasExt) extC[k] = (extC[k] ?? 0) + 1
+      })
+    })
+    const map = {}
+    new Set([...Object.keys(intC), ...Object.keys(extC)]).forEach(k => {
+      const [p, date] = k.split('||')
+      const n = Math.max(intC[k] ?? 0, extC[k] ?? 0)
+      if (n > 3) {
+        if (!map[date]) map[date] = []
+        map[date].push({ flag: COUNTRY_META[p]?.flag ?? '', name: COUNTRY_META[p]?.name ?? p, n })
+      }
+    })
+    return map
+  }, [weekFiltered])
+
   // Comms after both search + chip filters (for the calendar grid)
   const weekFiltered = useMemo(() =>
     searchedComms.filter(ev =>
@@ -862,8 +887,6 @@ export default function CalendarPage() {
         )}
       </div>
 
-      {/* Alert */}
-      {viewMode === 'week' && <CountryAlert comms={searchedComms} dateStrs={weekDayStrs} />}
 
       {/* ── Calendar content ── */}
       <div className="flex-1 overflow-hidden" onTouchStart={viewMode !== 'month' ? onTouchStart : undefined} onTouchEnd={viewMode !== 'month' ? onTouchEnd : undefined}>
@@ -894,6 +917,19 @@ export default function CalendarPage() {
                         <div className={cn('font-bold mx-auto rounded-full flex items-center justify-center', isMobile ? 'text-xs w-6 h-6' : 'text-sm w-7 h-7', isTod ? 'bg-sky-500 text-white' : isWE ? 'text-gray-300' : 'text-gray-800')}>
                           {d.getDate()}
                         </div>
+                        {satByDate[ds] && (
+                          <div
+                            className="flex items-center justify-center gap-px mt-0.5"
+                            title={satByDate[ds].map(c => `${c.flag} ${c.name}: ${c.n} comms`).join(' · ')}
+                          >
+                            <span className="text-[11px] leading-none">🚩</span>
+                            {!isMobile && (
+                              <span className="text-[9px] text-red-400 leading-none">
+                                {satByDate[ds].map(c => c.flag).join('')}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </th>
                     )
                   })}
