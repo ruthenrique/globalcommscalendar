@@ -610,7 +610,22 @@ export default function CalendarPage() {
     return map
   }, [searchedComms])
 
-  // Saturation map: date → [{flag, name, n}] for countries with >3 comms that day
+  // Comms after both search + chip filters (for the calendar grid)
+  const weekFiltered = useMemo(() =>
+    searchedComms.filter(ev =>
+      weekDayStrs.includes(ev.date) &&
+      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
+    ),
+    [searchedComms, weekDayStrs, filters]
+  )
+
+  const byDate = useMemo(() => {
+    const map = {}
+    weekFiltered.forEach(ev => { if (!map[ev.date]) map[ev.date] = []; map[ev.date].push(ev) })
+    return map
+  }, [weekFiltered])
+
+  // Saturation map: date → [{flag, name, n}] — declared AFTER weekFiltered ✓
   const satByDate = useMemo(() => {
     const intC = {}, extC = {}
     weekFiltered.forEach(ev => {
@@ -632,21 +647,6 @@ export default function CalendarPage() {
         map[date].push({ flag: COUNTRY_META[p]?.flag ?? '', name: COUNTRY_META[p]?.name ?? p, n })
       }
     })
-    return map
-  }, [weekFiltered])
-
-  // Comms after both search + chip filters (for the calendar grid)
-  const weekFiltered = useMemo(() =>
-    searchedComms.filter(ev =>
-      weekDayStrs.includes(ev.date) &&
-      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
-    ),
-    [searchedComms, weekDayStrs, filters]
-  )
-
-  const byDate = useMemo(() => {
-    const map = {}
-    weekFiltered.forEach(ev => { if (!map[ev.date]) map[ev.date] = []; map[ev.date].push(ev) })
     return map
   }, [weekFiltered])
 
