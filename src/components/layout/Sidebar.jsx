@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Calendar, BarChart2, Table2, Globe2, Settings,
-  ChevronLeft, ChevronRight, LogOut, KeyRound,
+  ChevronLeft, ChevronRight, LogOut, KeyRound, Bell,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -9,14 +9,16 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/layout/Toaster'
 import { ROLE_META, NAV_ITEMS } from '@/lib/constants'
+import NotificationPanel, { NotifBadge } from '@/components/layout/NotificationPanel'
 
 const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
 const LANGS = ['es', 'en', 'pt']
 
 export default function Sidebar({ activeTab, onTabChange }) {
-  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
-  const [changePw, setChangePw] = useState(false)
-  const [pwForm, setPwForm] = useState({ pw: '', pw2: '' })
+  const [collapsed,  setCollapsed]  = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
+  const [changePw,   setChangePw]   = useState(false)
+  const [pwForm,     setPwForm]     = useState({ pw: '', pw2: '' })
+  const [notifOpen,  setNotifOpen]  = useState(false)
 
   async function handleChangePw() {
     if (pwForm.pw.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
@@ -94,6 +96,27 @@ export default function Sidebar({ activeTab, onTabChange }) {
           )
         })}
       </nav>
+
+      {/* Notification bell */}
+      <div className="px-1.5 pt-1 border-t border-sidebar-border">
+        <button
+          onClick={() => setNotifOpen(o => !o)}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors relative',
+            notifOpen
+              ? 'bg-sidebar-accent text-sidebar-foreground'
+              : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            collapsed && 'justify-center'
+          )}
+          title="Notificaciones"
+        >
+          <div className="relative flex-shrink-0">
+            <Bell className="h-4 w-4" />
+            <NotifBadge />
+          </div>
+          {!collapsed && <span className="text-sm truncate">Notificaciones</span>}
+        </button>
+      </div>
 
       {/* Language switcher */}
       {!collapsed && (
@@ -183,6 +206,13 @@ export default function Sidebar({ activeTab, onTabChange }) {
           {!collapsed && t('sidebar.signOut')}
         </button>
       </div>
+
+      {/* Notification panel */}
+      <NotificationPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        onGoToCalendar={() => onTabChange('cal')}
+      />
     </aside>
   )
 }
