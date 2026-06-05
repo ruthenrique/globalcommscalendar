@@ -1,22 +1,18 @@
 import { useState } from 'react'
 import {
   Calendar, BarChart2, Table2, Globe2, Settings,
-  ChevronLeft, ChevronRight, LogOut, KeyRound,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
-import { toast } from '@/components/layout/Toaster'
-import { ROLE_META, NAV_ITEMS } from '@/lib/constants'
+import { NAV_ITEMS } from '@/lib/constants'
 
 const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
 const LANGS = ['es', 'en', 'pt']
 
 export default function Sidebar({ activeTab, onTabChange }) {
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
-  const [changePw,  setChangePw]  = useState(false)
-  const [pwForm,    setPwForm]    = useState({ pw: '', pw2: '' })
 
   async function handleChangePw() {
     if (pwForm.pw.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
@@ -29,12 +25,11 @@ export default function Sidebar({ activeTab, onTabChange }) {
       setPwForm({ pw: '', pw2: '' })
     }
   }
-  const { profile, role, signOut }  = useAuth()
-  const { t, i18n }                 = useTranslation()
-  const perms = ROLE_META[role] ?? ROLE_META.viewer
+  const { perms, role } = useAuth()
+  const { t }           = useTranslation()
 
   const navItems = NAV_ITEMS.filter(item => {
-    if (item.id === 'admin') return perms.canManage
+    if (item.id === 'admin') return perms?.canManage
     if (item.id === 'data')  return role !== 'viewer'
     return true
   })
@@ -95,95 +90,6 @@ export default function Sidebar({ activeTab, onTabChange }) {
         })}
       </nav>
 
-
-      {/* Language switcher */}
-      {!collapsed && (
-        <div className="px-3 pb-1 pt-2 border-t border-sidebar-border">
-          <div className="flex items-center gap-1">
-            {LANGS.map(lang => (
-              <button
-                key={lang}
-                onClick={() => i18n.changeLanguage(lang)}
-                className={cn(
-                  'flex-1 text-[10px] font-bold rounded-md py-1 uppercase tracking-wide transition-colors',
-                  i18n.language.startsWith(lang)
-                    ? 'bg-sidebar-primary text-white'
-                    : 'text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent'
-                )}
-              >
-                {t(`lang.${lang}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* User */}
-      <div className="px-1.5 pb-3 pt-2 space-y-1">
-        <div className={cn(
-          'flex items-center gap-2 px-2.5 py-2 rounded-md',
-          collapsed ? 'justify-center' : ''
-        )}>
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: profile?.color ?? '#0EA5E9' }}
-          >
-            {profile?.initials ?? 'U'}
-          </div>
-          {!collapsed && (
-            <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-medium text-sidebar-foreground truncate">{profile?.name ?? 'Usuario'}</div>
-              <div className="text-[10px] text-sidebar-foreground/50 truncate">
-                {ROLE_META[role]?.label ?? 'Viewer'}
-              </div>
-            </div>
-          )}
-        </div>
-        {changePw && !collapsed && (
-          <div className="px-2.5 py-2 space-y-1.5">
-            <input
-              type="password"
-              placeholder="Nueva contraseña"
-              value={pwForm.pw}
-              onChange={e => setPwForm(f => ({ ...f, pw: e.target.value }))}
-              className="w-full text-xs border rounded px-2 py-1 h-7"
-            />
-            <input
-              type="password"
-              placeholder="Repetir contraseña"
-              value={pwForm.pw2}
-              onChange={e => setPwForm(f => ({ ...f, pw2: e.target.value }))}
-              className="w-full text-xs border rounded px-2 py-1 h-7"
-            />
-            <div className="flex gap-1">
-              <button onClick={handleChangePw} className="flex-1 text-[10px] bg-primary text-white rounded px-2 py-1">Guardar</button>
-              <button onClick={() => { setChangePw(false); setPwForm({ pw: '', pw2: '' }) }} className="flex-1 text-[10px] border rounded px-2 py-1">Cancelar</button>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={() => setChangePw(v => !v)}
-          className={cn(
-            'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-            collapsed && 'justify-center'
-          )}
-          title="Cambiar contraseña"
-        >
-          <KeyRound className="h-3.5 w-3.5 flex-shrink-0" />
-          {!collapsed && 'Cambiar contraseña'}
-        </button>
-        <button
-          onClick={signOut}
-          className={cn(
-            'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-            collapsed && 'justify-center'
-          )}
-          title={t('sidebar.signOut')}
-        >
-          <LogOut className="h-3.5 w-3.5 flex-shrink-0" />
-          {!collapsed && t('sidebar.signOut')}
-        </button>
-      </div>
 
     </aside>
   )
