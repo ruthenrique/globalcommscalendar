@@ -51,8 +51,10 @@ export const PAIS_IDIOMA = {
 }
 
 export const NAV_ITEMS = [
-  { id: 'cal',   label: 'Calendario',      icon: 'Calendar'  },
-  { id: 'map',   label: 'Analytics',       icon: 'BarChart2' },
-  { id: 'data',  label: 'Data Master',     icon: 'Table2'    },
-  { id: 'admin', label: 'Administración',  icon: 'Settings'  },
+  { id: 'cal',   label: 'Calendario',      icon: 'Calendar'     },
+  { id: 'brief', label: 'Briefing',        icon: 'ClipboardList'},
+  { id: 'map',   label: 'Dashboard',       icon: 'BarChart2'    },
+  { id: 'data',  label: 'Data Master',     icon: 'Table2'       },
+  { id: 'admin', label: 'Administración',  icon: 'Settings'     },
+  { id: 'about', label: 'Acerca de',       icon: 'Info'         },
 ]

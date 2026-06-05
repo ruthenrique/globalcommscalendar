@@ -7,12 +7,13 @@ import { toast } from '@/components/layout/Toaster'
 import { Toaster } from '@/components/layout/Toaster'
 import Sidebar from '@/components/layout/Sidebar'
 import NotificationPanel, { NotifBadge } from '@/components/layout/NotificationPanel'
-import BriefingPanel from '@/components/layout/BriefingPanel'
-import CalendarPage from '@/pages/CalendarPage'
-import DataMasterPage from '@/pages/DataMasterPage'
+import CalendarPage   from '@/pages/CalendarPage'
+import DataMasterPage  from '@/pages/DataMasterPage'
 import AdminGlobalPage from '@/pages/AdminGlobalPage'
-import AdminPage from '@/pages/AdminPage'
-import LoginPage from '@/pages/LoginPage'
+import AdminPage       from '@/pages/AdminPage'
+import BriefingPage    from '@/pages/BriefingPage'
+import AboutPage       from '@/pages/AboutPage'
+import LoginPage       from '@/pages/LoginPage'
 import { DemoProvider } from '@/demo/DemoProvider'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { AppProvider } from '@/contexts/AppContext'
@@ -156,9 +157,8 @@ function UserMenu() {
 const PAGE_ICONS = { cal: '📅', map: '✦', data: '🗃', admin: '⚙️' }
 
 function Shell() {
-  const [tab,          setTab]          = useState('cal')
-  const [notifOpen,    setNotifOpen]    = useState(false)
-  const [briefingOpen, setBriefingOpen] = useState(false)
+  const [tab,       setTab]       = useState('cal')
+  const [notifOpen, setNotifOpen] = useState(false)
   const { t } = useTranslation()
 
   return (
@@ -176,12 +176,6 @@ function Shell() {
           </span>
 
           <div className="ml-auto flex items-center gap-0.5">
-            {/* Briefing */}
-            <button
-              onClick={() => setBriefingOpen(o => !o)}
-              className={`p-2 rounded-lg transition-colors text-sm ${briefingOpen ? 'bg-gray-100' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'}`}
-              title="Briefing diario"
-            >📋</button>
             {/* Notificaciones */}
             <button
               onClick={() => setNotifOpen(o => !o)}
@@ -200,13 +194,14 @@ function Shell() {
 
         {/* Panels */}
         <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} onGoToCalendar={() => { setTab('cal'); setNotifOpen(false) }} />
-        <BriefingPanel open={briefingOpen} onClose={() => setBriefingOpen(false)} />
 
         <div key={tab} className="flex-1 overflow-hidden page-fade">
           {tab === 'cal'   && <CalendarPage    />}
+          {tab === 'brief' && <BriefingPage    />}
           {tab === 'map'   && <AdminGlobalPage />}
           {tab === 'data'  && <DataMasterPage  />}
           {tab === 'admin' && <AdminPage       />}
+          {tab === 'about' && <AboutPage       />}
         </div>
       </main>
     </div>

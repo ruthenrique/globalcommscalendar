@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import {
   Calendar, BarChart2, Table2, Globe2, Settings,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ClipboardList, Info,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { NAV_ITEMS } from '@/lib/constants'
 
-const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
+const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings, ClipboardList, Info }
 const LANGS = ['es', 'en', 'pt']
 
 export default function Sidebar({ activeTab, onTabChange }) {
