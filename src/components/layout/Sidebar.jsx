@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/layout/Toaster'
 import { ROLE_META, NAV_ITEMS } from '@/lib/constants'
 import NotificationPanel, { NotifBadge } from '@/components/layout/NotificationPanel'
+import BriefingPanel from '@/components/layout/BriefingPanel'
 
 const ICON_MAP = { Calendar, BarChart2, Table2, Globe2, Settings }
 const LANGS = ['es', 'en', 'pt']
@@ -18,7 +19,8 @@ export default function Sidebar({ activeTab, onTabChange }) {
   const [collapsed,  setCollapsed]  = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
   const [changePw,   setChangePw]   = useState(false)
   const [pwForm,     setPwForm]     = useState({ pw: '', pw2: '' })
-  const [notifOpen,  setNotifOpen]  = useState(false)
+  const [notifOpen,    setNotifOpen]    = useState(false)
+  const [briefingOpen, setBriefingOpen] = useState(false)
 
   async function handleChangePw() {
     if (pwForm.pw.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
@@ -97,8 +99,26 @@ export default function Sidebar({ activeTab, onTabChange }) {
         })}
       </nav>
 
-      {/* Notification bell */}
+      {/* Briefing */}
       <div className="px-1.5 pt-1 border-t border-sidebar-border">
+        <button
+          onClick={() => setBriefingOpen(o => !o)}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors',
+            briefingOpen
+              ? 'bg-sidebar-accent text-sidebar-foreground'
+              : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            collapsed && 'justify-center'
+          )}
+          title="Briefing diario"
+        >
+          <span className="text-sm leading-none flex-shrink-0">📋</span>
+          {!collapsed && <span className="text-sm truncate">Briefing</span>}
+        </button>
+      </div>
+
+      {/* Notification bell */}
+      <div className="px-1.5 pt-1">
         <button
           onClick={() => setNotifOpen(o => !o)}
           className={cn(
@@ -212,6 +232,12 @@ export default function Sidebar({ activeTab, onTabChange }) {
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
         onGoToCalendar={() => onTabChange('cal')}
+      />
+
+      {/* Briefing panel */}
+      <BriefingPanel
+        open={briefingOpen}
+        onClose={() => setBriefingOpen(false)}
       />
     </aside>
   )

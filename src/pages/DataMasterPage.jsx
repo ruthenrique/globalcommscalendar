@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { Search, Plus, Edit2, Trash2, Download, Upload, X, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Download, Upload, X, AlertCircle, CheckCircle2, FileDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useApp } from '@/contexts/AppContext'
@@ -276,12 +276,13 @@ export default function DataMasterPage() {
   const { communications, deleteComm, createComm } = useApp()
   const { perms, canEditCountry, role, myCountries } = useAuth()
 
-  const [search,    setSearch]    = useState('')
-  const [modal,     setModal]     = useState({ open: false, initial: null })
-  const [importOpen, setImportOpen] = useState(false)
-  const [selIds,    setSelIds]    = useState(new Set())
-  const [sortBy,    setSortBy]    = useState('date')
-  const [sortDir,   setSortDir]   = useState('desc')
+  const [search,      setSearch]      = useState('')
+  const [modal,       setModal]       = useState({ open: false, initial: null })
+  const [importOpen,  setImportOpen]  = useState(false)
+  const [exportOpen,  setExportOpen]  = useState(false)
+  const [selIds,      setSelIds]      = useState(new Set())
+  const [sortBy,      setSortBy]      = useState('date')
+  const [sortDir,     setSortDir]     = useState('desc')
 
   const isSuperAdmin = role === 'super_admin'
 
@@ -398,8 +399,8 @@ export default function DataMasterPage() {
         <div className="ml-auto flex gap-2">
           {/* Export: solo super_admin */}
           {isSuperAdmin && (
-            <Button size="sm" variant="outline" onClick={exportCSV} title="Exportar CSV">
-              <Download className="h-3.5 w-3.5 mr-1" /> CSV
+            <Button size="sm" variant="outline" onClick={() => setExportOpen(true)} title="Exportar planning">
+              <FileDown className="h-3.5 w-3.5 mr-1" /> Exportar
             </Button>
           )}
           {/* Import: solo super_admin */}
@@ -530,6 +531,131 @@ export default function DataMasterPage() {
         onClose={() => setImportOpen(false)}
         onImport={createComm}
       />
+
+      {exportOpen && (
+        <ExportModal
+          communications={visibleComms}
+          onClose={() => setExportOpen(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Export modal ──────────────────────────────────────────
+function ExportModal({ communications, onClose }) {
+  const today = new Date().toISOString().slice(0, 10)
+  const [from,   setFrom]   = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0,10) })
+  const [to,     setTo]     = useState(() => { const d = new Date(); d.setMonth(d.getMonth()+1, 0); return d.toISOString().slice(0,10) })
+  const [países, setPaises] = useState([])
+  const [estado, setEstado] = useState([])
+  const [canal,  setCanal]  = useState([])
+
+  const paisOptions   = useMemo(() => [...new Set(communications.flatMap(c => arr(c.pais)))].sort(),  [communications])
+  const canalOptions  = useMemo(() => [...new Set(communications.flatMap(c => arr(c.canal)))].sort(), [communications])
+  const estadoOptions = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
+
+  const preview = useMemo(() => communications.filter(c => {
+    if (c.date < from || c.date > to) return false
+    if (países.length && !arr(c.pais).some(p => países.includes(p))) return false
+    if (estado.length && !arr(c.estado).some(e => estado.includes(e))) return false
+    if (canal.length  && !arr(c.canal).some(ch => canal.includes(ch))) return false
+    return true
+  }), [communications, from, to, países, estado, canal])
+
+  function doExport() {
+    const header = ['ID','Título','Fecha','País','Canal','Segmento','Tópico','Formato','Idioma','Alcance','Estado','Destacado']
+    const rows = preview.map(c => [
+      c.id, c.titulo, c.date,
+      arr(c.pais).join('|'), arr(c.canal).join('|'),
+      arr(c.segmento).join('|'), arr(c.topico).join('|'),
+      arr(c.formato).join('|'), arr(c.idioma).join('|'),
+      arr(c.alcance).join('|'), arr(c.estado).join('|'),
+      c.destacado ? 'Sí' : 'No',
+    ])
+    const csv = [header, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n')
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
+    a.download = `planning-${from}-${to}.csv`
+    a.click()
+    onClose()
+  }
+
+  function Chips({ options, value, onChange }) {
+    return (
+      <div className="flex flex-wrap gap-1.5 mt-1.5">
+        {options.map(o => (
+          <button key={o} type="button"
+            onClick={() => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o])}
+            className={cn('text-[11px] px-2 py-0.5 rounded-full border transition-all',
+              value.includes(o) ? 'bg-gray-900 text-white border-gray-900' : 'text-gray-500 border-gray-200 hover:border-gray-400'
+            )}
+          >{o}</button>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <FileDown className="h-4 w-4 text-gray-700" />
+            <span className="font-bold text-gray-900 tracking-tight">Exportar planning</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="h-3.5 w-3.5" /></button>
+        </div>
+
+        <div className="px-5 py-4 space-y-4">
+          {/* Date range */}
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Rango de fechas</label>
+            <div className="flex gap-2 mt-1.5">
+              <input type="date" value={from} onChange={e => setFrom(e.target.value)}
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-gray-400" />
+              <span className="text-gray-400 self-center text-sm">→</span>
+              <input type="date" value={to} onChange={e => setTo(e.target.value)}
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-gray-400" />
+            </div>
+          </div>
+
+          {/* País */}
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">País <span className="text-gray-300 font-normal normal-case">(vacío = todos)</span></label>
+            <Chips options={paisOptions} value={países} onChange={setPaises} />
+          </div>
+
+          {/* Estado */}
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Estado</label>
+            <Chips options={estadoOptions} value={estado} onChange={setEstado} />
+          </div>
+
+          {/* Canal */}
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Canal</label>
+            <Chips options={canalOptions} value={canal} onChange={setCanal} />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-xs text-gray-500">
+            <span className="font-bold text-gray-900 text-sm">{preview.length}</span> comms
+          </span>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100">Cancelar</button>
+            <button
+              onClick={doExport}
+              disabled={preview.length === 0}
+              className="text-sm bg-gray-900 text-white px-4 py-1.5 rounded-lg hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed font-medium flex items-center gap-1.5"
+            >
+              <FileDown className="h-3.5 w-3.5" /> Descargar CSV
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
