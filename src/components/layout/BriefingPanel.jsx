@@ -3,7 +3,7 @@ import { X, CalendarDays, ChevronRight } from 'lucide-react'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr, cn } from '@/lib/utils'
-import { COUNTRY_META, STATUS_META, CHANNEL_META, INTERNAL_CHANNELS, EXTERNAL_CHANNELS } from '@/lib/constants'
+import { COUNTRY_META, STATUS_META, CHANNEL_META } from '@/lib/constants'
 
 // ── Helpers ───────────────────────────────────────────────
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
