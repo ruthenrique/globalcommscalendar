@@ -22,10 +22,11 @@ const ADMIN_TABS = [
 function UsersPanel() {
   const { myCountries, role } = useAuth()
   const { countries } = useApp()
-  const [users, setUsers]     = useState([])
-  const [editing, setEditing] = useState(null)
-  const [form, setForm]       = useState({})
-  const [resetPw, setResetPw] = useState({ email: null, value: '' })
+  const [users,      setUsers]      = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [editing,    setEditing]    = useState(null)
+  const [form,       setForm]       = useState({})
+  const [resetPw,    setResetPw]    = useState({ email: null, value: '' })
 
   async function handleResetPw() {
     if (resetPw.value.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
@@ -41,7 +42,11 @@ function UsersPanel() {
   }
 
   useEffect(() => {
-    supabase.from('profiles').select('*').order('name').then(({ data }) => data && setUsers(data))
+    supabase.from('profiles').select('*').order('name').then(({ data, error }) => {
+      if (data) setUsers(data)
+      setLoadingUsers(false)
+      if (error) console.error('[UsersPanel]', error.message)
+    })
   }, [])
 
   async function saveUser(u) {
@@ -60,6 +65,16 @@ function UsersPanel() {
   }
 
   const countryList = countries.map(c => c.code)
+
+  if (loadingUsers) return (
+    <div className="py-10 text-center text-sm text-muted-foreground">Cargando usuarios…</div>
+  )
+  if (!users.length) return (
+    <div className="py-10 text-center space-y-1">
+      <p className="text-sm text-gray-500 font-medium">No se encontraron usuarios</p>
+      <p className="text-xs text-gray-400">Verificá los permisos RLS de la tabla <code className="bg-gray-100 px-1 rounded">profiles</code> en Supabase.</p>
+    </div>
+  )
 
   return (
     <div className="space-y-3">

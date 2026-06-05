@@ -54,6 +54,14 @@ function weekLabel(monday, lang, short = false) {
   if (ms === ss) return `${monday.getDate()}–${sunday.getDate()} de ${ms} ${y}`
   return `${monday.getDate()} ${ms} – ${sunday.getDate()} ${ss} ${y}`
 }
+function dayLabel(dayStr, lang, short = false) {
+  const d      = new Date(dayStr + 'T00:00:00')
+  const months = getMonthNames(lang)
+  const dows   = getDowLabels(lang)
+  const dow    = dows[d.getDay()]
+  if (short) return `${dow} ${d.getDate()} ${months[d.getMonth()].slice(0, 3)}`
+  return `${dow} ${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`
+}
 
 // ── Mobile hook ───────────────────────────────────────────
 function useIsMobile() {
@@ -131,6 +139,12 @@ function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
         <div className="text-[10px] font-semibold leading-snug line-clamp-2" style={{ color: stMeta.color ?? '#1a1a1a' }}>
           {ev.titulo}
         </div>
+        {canal && (
+          <div className="flex items-center gap-0.5 mt-0.5">
+            <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: chanMeta.color ?? '#ccc' }} />
+            <span className="text-[9px] opacity-50 truncate leading-none">{canal}</span>
+          </div>
+        )}
       </div>
     )
   }
@@ -415,6 +429,98 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
 }
 
 // ── Main CalendarPage ─────────────────────────────────────
+// ── Day view ──────────────────────────────────────────────
+function DayView({ comms, dayStr, today, onEventClick, canEdit, onAdd, statusT }) {
+  const dayComms = comms.filter(c => c.date === dayStr)
+  const groups   = {}
+  dayComms.forEach(ev => {
+    const ch = arr(ev.canal)[0] ?? '—'
+    if (!groups[ch]) groups[ch] = []
+    groups[ch].push(ev)
+  })
+  return (
+    <div className="flex-1 h-full overflow-y-auto px-4 py-4">
+      {dayComms.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
+          <p className="text-sm font-medium text-gray-500">Sin comunicaciones</p>
+          {canEdit && (
+            <button onClick={() => onAdd(dayStr)} className="mt-3 text-xs text-sky-600 hover:underline flex items-center gap-1">
+              <Plus className="h-3.5 w-3.5" /> Nueva comunicación
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-5 max-w-2xl mx-auto">
+          {Object.entries(groups).map(([canal, evs]) => {
+            const chanMeta = CHANNEL_META[canal] ?? {}
+            return (
+              <div key={canal}>
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-100">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: chanMeta.color ?? '#ccc' }} />
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{canal}</span>
+                  <span className="text-[10px] text-gray-300 ml-auto">{evs.length} {evs.length === 1 ? 'comm' : 'comms'}</span>
+                </div>
+                <div className="space-y-2">
+                  {evs.map(ev => (
+                    <EventCard key={ev.id} ev={ev} onClick={() => onEventClick(ev)} onDragStart={() => {}} statusT={statusT} compact={false} />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Mini month picker ─────────────────────────────────────
+function MiniMonthPicker({ initYear, initMonth, today, commsPerDay, lang, onSelectDay, onClose }) {
+  const [y, setY] = useState(initYear)
+  const [m, setM] = useState(initMonth)
+  const monthNames = getMonthNames(lang)
+  const firstDow   = (new Date(y, m, 1).getDay() + 6) % 7
+  const daysInMonth = new Date(y, m + 1, 0).getDate()
+  const cells = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+  while (cells.length % 7 !== 0) cells.push(null)
+  function prev() { m === 0  ? (setM(11), setY(y => y - 1)) : setM(m => m - 1) }
+  function next() { m === 11 ? (setM(0),  setY(y => y + 1)) : setM(m => m + 1) }
+  return (
+    <div className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 top-full mt-1 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-64">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={prev} className="p-1 rounded-lg hover:bg-gray-100"><ChevronLeft className="h-4 w-4 text-gray-500" /></button>
+        <span className="text-sm font-semibold text-gray-800">{monthNames[m]} {y}</span>
+        <button onClick={next} className="p-1 rounded-lg hover:bg-gray-100"><ChevronRight className="h-4 w-4 text-gray-500" /></button>
+      </div>
+      <div className="grid grid-cols-7 text-center">
+        {['L','M','X','J','V','S','D'].map(d => (
+          <div key={d} className="text-[9px] text-gray-400 py-1 font-medium">{d}</div>
+        ))}
+        {cells.map((d, i) => {
+          if (!d) return <div key={i} />
+          const ds      = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+          const count   = commsPerDay[ds] ?? 0
+          const isToday = ds === today
+          return (
+            <button key={i} onClick={() => { onSelectDay(ds); onClose() }}
+              className={cn('flex flex-col items-center justify-center text-xs py-1 rounded-lg transition-colors',
+                isToday ? 'bg-gray-900 text-white font-bold' : 'hover:bg-gray-100 text-gray-700'
+              )}
+            >
+              <span>{d}</span>
+              {count > 0 && <span className="w-1 h-1 rounded-full mt-0.5" style={{ background: isToday ? 'rgba(255,255,255,0.6)' : '#0EA5E9' }} />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function CalendarPage() {
   const { communications, channels, updateComm } = useApp()
   const { perms, canEditCountry, role, myCountries } = useAuth()
@@ -433,7 +539,19 @@ export default function CalendarPage() {
   const [searchOpen,   setSearchOpen]   = useState(false)
   const [modal,        setModal]        = useState({ open: false, initial: null })
   const [dragId,       setDragId]       = useState(null)
-  const searchRef                       = useRef(null)
+  const [selectedDay,  setSelectedDay]  = useState(() => todayStr())
+  const [pickerOpen,   setPickerOpen]   = useState(false)
+  const searchRef  = useRef(null)
+  const pickerRef  = useRef(null)
+
+  // Close picker on outside click
+  useEffect(() => {
+    if (!pickerOpen) return
+    function handle(e) { if (pickerRef.current && !pickerRef.current.contains(e.target)) setPickerOpen(false) }
+    document.addEventListener('mousedown', handle)
+    document.addEventListener('touchstart', handle)
+    return () => { document.removeEventListener('mousedown', handle); document.removeEventListener('touchstart', handle) }
+  }, [pickerOpen])
 
   const today      = todayStr()
   const lang       = i18n.language
@@ -475,6 +593,22 @@ export default function CalendarPage() {
   const filterOptions = { pais: paiOptions, canal: canalOptions, topico: topicoOptions, segmento: segOptions, estado: estadoOptions }
 
   const activeFilters = Object.values(filters).reduce((n, v) => n + v.length, 0)
+
+  // Day view filtered comms
+  const dayFiltered = useMemo(() =>
+    searchedComms.filter(ev =>
+      ev.date === selectedDay &&
+      FILTER_KEYS.every(fd => intersects(ev[fd.key], filters[fd.key]))
+    ),
+    [searchedComms, selectedDay, filters]
+  )
+
+  // Dots map for mini picker
+  const commsPerDay = useMemo(() => {
+    const map = {}
+    searchedComms.forEach(c => { if (c.date) map[c.date] = (map[c.date] ?? 0) + 1 })
+    return map
+  }, [searchedComms])
 
   // Comms after both search + chip filters (for the calendar grid)
   const weekFiltered = useMemo(() =>
@@ -522,6 +656,10 @@ export default function CalendarPage() {
     setDragId(null)
   }
 
+  // Day navigation helpers
+  function prevDay() { const d = new Date(selectedDay + 'T00:00:00'); d.setDate(d.getDate() - 1); setSelectedDay(dateStr(d)) }
+  function nextDay() { const d = new Date(selectedDay + 'T00:00:00'); d.setDate(d.getDate() + 1); setSelectedDay(dateStr(d)) }
+
   // Swipe
   const touchStartX = useRef(null)
   function onTouchStart(e) { touchStartX.current = e.touches[0].clientX }
@@ -529,9 +667,31 @@ export default function CalendarPage() {
     if (touchStartX.current === null) return
     const dx = e.changedTouches[0].clientX - touchStartX.current
     if (Math.abs(dx) < 40) return
-    if (dx > 0) setWeekStart(w => addDays(w, -7))
-    else        setWeekStart(w => addDays(w, 7))
+    if (viewMode === 'day') {
+      if (dx > 0) prevDay(); else nextDay()
+    } else {
+      if (dx > 0) setWeekStart(w => addDays(w, -7))
+      else        setWeekStart(w => addDays(w, 7))
+    }
     touchStartX.current = null
+  }
+
+  // Picker month init
+  const pickerDate = viewMode === 'day'
+    ? new Date(selectedDay + 'T00:00:00')
+    : viewMode === 'week'
+    ? weekStart
+    : new Date(currentMonth.year, currentMonth.month, 1)
+
+  function handlePickerSelect(ds) {
+    if (viewMode === 'day') {
+      setSelectedDay(ds)
+    } else if (viewMode === 'week') {
+      setWeekStart(getMonday(new Date(ds + 'T00:00:00')))
+    } else {
+      const d = new Date(ds + 'T00:00:00')
+      setCurrentMonth({ year: d.getFullYear(), month: d.getMonth() })
+    }
   }
 
   function clearAll() {
@@ -553,28 +713,45 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2 px-3 py-2.5">
           {/* Nav */}
           <div className="flex items-center gap-0.5">
-            <button onClick={() => viewMode === 'week' ? setWeekStart(w => addDays(w, -7)) : prevMonth()} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+            <button onClick={() => { if (viewMode === 'week') setWeekStart(w => addDays(w, -7)); else if (viewMode === 'day') prevDay(); else prevMonth() }} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
               <ChevronLeft className="h-4 w-4 text-gray-400" />
             </button>
-            <span className={cn('font-semibold text-gray-800 px-1.5 text-center select-none', isMobile ? 'text-xs min-w-[100px]' : 'text-sm min-w-[200px]')}>
-              {viewMode === 'week' ? weekLabel(weekStart, lang, isMobile) : `${monthNames[currentMonth.month]} ${currentMonth.year}`}
-            </span>
-            <button onClick={() => viewMode === 'week' ? setWeekStart(w => addDays(w, 7)) : nextMonth()} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="relative" ref={pickerRef}>
+              <button
+                onClick={() => setPickerOpen(o => !o)}
+                className={cn('font-semibold text-gray-800 px-1.5 text-center hover:bg-gray-50 rounded-lg transition-colors', isMobile ? 'text-xs min-w-[100px]' : 'text-sm min-w-[200px]')}
+              >
+                {viewMode === 'week'  ? weekLabel(weekStart, lang, isMobile)
+                 : viewMode === 'day' ? dayLabel(selectedDay, lang, isMobile)
+                 : `${monthNames[currentMonth.month]} ${currentMonth.year}`}
+              </button>
+              {pickerOpen && (
+                <MiniMonthPicker
+                  initYear={pickerDate.getFullYear()} initMonth={pickerDate.getMonth()}
+                  today={today} commsPerDay={commsPerDay} lang={lang}
+                  onSelectDay={handlePickerSelect} onClose={() => setPickerOpen(false)}
+                />
+              )}
+            </div>
+            <button onClick={() => { if (viewMode === 'week') setWeekStart(w => addDays(w, 7)); else if (viewMode === 'day') nextDay(); else nextMonth() }} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
               <ChevronRight className="h-4 w-4 text-gray-400" />
             </button>
           </div>
 
-          {viewMode === 'week' && !isThisWeek && (
-            <button onClick={() => setWeekStart(getMonday())} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+          {((viewMode === 'week' && !isThisWeek) || (viewMode === 'day' && selectedDay !== today)) && (
+            <button onClick={() => { if (viewMode === 'week') setWeekStart(getMonday()); else setSelectedDay(today) }} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
               <CalendarDays className="h-3 w-3" />
               {!isMobile && t('calendar.today')}
             </button>
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Toggle semana/mes */}
+            {/* Toggle día/semana/mes */}
             <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs">
-              <button onClick={() => setViewMode('week')} className={cn('px-2.5 py-1.5 transition-colors', viewMode === 'week' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
+              <button onClick={() => setViewMode('day')} className={cn('px-2.5 py-1.5 transition-colors', viewMode === 'day' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
+                {isMobile ? '1d' : 'Día'}
+              </button>
+              <button onClick={() => { setViewMode('week'); if (viewMode === 'day') setWeekStart(getMonday(new Date(selectedDay + 'T00:00:00'))) }} className={cn('px-2.5 py-1.5 transition-colors border-l border-gray-200', viewMode === 'week' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
                 {isMobile ? '7d' : 'Semana'}
               </button>
               <button onClick={() => setViewMode('month')} className={cn('px-2.5 py-1.5 transition-colors border-l border-gray-200', viewMode === 'month' ? 'bg-sky-50 text-sky-600 font-semibold' : 'text-gray-500 hover:bg-gray-50')}>
@@ -689,8 +866,14 @@ export default function CalendarPage() {
       {viewMode === 'week' && <CountryAlert comms={searchedComms} dateStrs={weekDayStrs} />}
 
       {/* ── Calendar content ── */}
-      <div className="flex-1 overflow-hidden" onTouchStart={viewMode === 'week' ? onTouchStart : undefined} onTouchEnd={viewMode === 'week' ? onTouchEnd : undefined}>
-        {viewMode === 'week' ? (
+      <div className="flex-1 overflow-hidden" onTouchStart={viewMode !== 'month' ? onTouchStart : undefined} onTouchEnd={viewMode !== 'month' ? onTouchEnd : undefined}>
+        {viewMode === 'day' ? (
+          <DayView
+            comms={dayFiltered} dayStr={selectedDay} today={today}
+            onEventClick={openEdit} canEdit={perms.canEdit}
+            onAdd={ds => openNew('', ds)} statusT={s => t(`status.${s}`, s)}
+          />
+        ) : viewMode === 'week' ? (
           <div className="h-full overflow-auto">
             <table className="border-collapse" style={{ minWidth: isMobile ? '100%' : 480, width: '100%', tableLayout: 'fixed' }}>
               <colgroup>
