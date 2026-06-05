@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Bell } from 'lucide-react'
 import { Toaster } from '@/components/layout/Toaster'
 import Sidebar from '@/components/layout/Sidebar'
+import NotificationPanel, { NotifBadge } from '@/components/layout/NotificationPanel'
+import BriefingPanel from '@/components/layout/BriefingPanel'
 import CalendarPage from '@/pages/CalendarPage'
 import DataMasterPage from '@/pages/DataMasterPage'
 import AdminGlobalPage from '@/pages/AdminGlobalPage'
@@ -20,7 +23,9 @@ const DEMO_MODE = false
 const PAGE_ICONS = { cal: '📅', map: '✦', data: '🗃', admin: '⚙️' }
 
 function Shell() {
-  const [tab, setTab] = useState('cal')
+  const [tab,          setTab]          = useState('cal')
+  const [notifOpen,    setNotifOpen]    = useState(false)
+  const [briefingOpen, setBriefingOpen] = useState(false)
   const { t } = useTranslation()
 
   return (
@@ -36,7 +41,32 @@ function Shell() {
           <span className="text-[13px] font-semibold text-gray-700">
             {PAGE_ICONS[tab]} {t(`page.${tab}`)}
           </span>
+
+          {/* Acciones rápidas — margen superior derecho */}
+          <div className="ml-auto flex items-center gap-1">
+            {/* Briefing */}
+            <button
+              onClick={() => setBriefingOpen(o => !o)}
+              className={`p-2 rounded-lg transition-colors text-sm ${briefingOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'}`}
+              title="Briefing diario"
+            >
+              📋
+            </button>
+            {/* Notificaciones */}
+            <button
+              onClick={() => setNotifOpen(o => !o)}
+              className={`relative p-2 rounded-lg transition-colors ${notifOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'}`}
+              title="Notificaciones"
+            >
+              <Bell className="h-4 w-4" />
+              <NotifBadge />
+            </button>
+          </div>
         </header>
+
+        {/* Panels */}
+        <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} onGoToCalendar={() => { setTab('cal'); setNotifOpen(false) }} />
+        <BriefingPanel open={briefingOpen} onClose={() => setBriefingOpen(false)} />
 
         <div key={tab} className="flex-1 overflow-hidden page-fade">
           {tab === 'cal'   && <CalendarPage    />}
