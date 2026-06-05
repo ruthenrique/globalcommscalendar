@@ -164,17 +164,13 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
-        onClick={onClose}
-        aria-hidden
-      />
+      {/* Backdrop — solo cierra al click, sin oscurecer */}
+      <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
 
-      {/* Panel */}
+      {/* Panel — dropdown posicionado bajo la campanita */}
       <div
         ref={panelRef}
-        className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl border-r border-gray-100 flex flex-col data-[state=open]:animate-in slide-in-from-left duration-200"
+        className="fixed right-3 top-[52px] z-50 w-80 max-h-[calc(100vh-70px)] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 flex-shrink-0">
@@ -196,7 +192,7 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex-1 overflow-y-auto py-2 min-h-0">
           {groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
