@@ -6,7 +6,7 @@ import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/layout/Toaster'
 import CommModal from '@/components/CommModal'
-import { arr, formatDate } from '@/lib/utils'
+import { arr, formatDate, cn } from '@/lib/utils'
 import { COUNTRY_META, STATUS_META, FORMAT_ICON, CHANNEL_META } from '@/lib/constants'
 
 // ── Status badge ──────────────────────────────────────────
@@ -543,6 +543,21 @@ export default function DataMasterPage() {
 }
 
 // ── Export modal ──────────────────────────────────────────
+function Chips({ options, value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1.5">
+      {options.map(o => (
+        <button key={o} type="button"
+          onClick={() => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o])}
+          className={cn('text-[11px] px-2 py-0.5 rounded-full border transition-all',
+            value.includes(o) ? 'bg-gray-900 text-white border-gray-900' : 'text-gray-500 border-gray-200 hover:border-gray-400'
+          )}
+        >{o}</button>
+      ))}
+    </div>
+  )
+}
+
 function ExportModal({ communications, onClose }) {
   const today = new Date().toISOString().slice(0, 10)
   const [from,   setFrom]   = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0,10) })
@@ -579,21 +594,6 @@ function ExportModal({ communications, onClose }) {
     a.download = `planning-${from}-${to}.csv`
     a.click()
     onClose()
-  }
-
-  function Chips({ options, value, onChange }) {
-    return (
-      <div className="flex flex-wrap gap-1.5 mt-1.5">
-        {options.map(o => (
-          <button key={o} type="button"
-            onClick={() => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o])}
-            className={cn('text-[11px] px-2 py-0.5 rounded-full border transition-all',
-              value.includes(o) ? 'bg-gray-900 text-white border-gray-900' : 'text-gray-500 border-gray-200 hover:border-gray-400'
-            )}
-          >{o}</button>
-        ))}
-      </div>
-    )
   }
 
   return (
