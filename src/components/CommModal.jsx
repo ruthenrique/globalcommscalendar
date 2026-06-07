@@ -46,24 +46,43 @@ function MultiSelect({ label, options, value, onChange, getLabel, getKey, colorF
   )
 }
 
-function SingleSelect({ label, options, value, onChange, getLabel, getKey, placeholder }) {
-  const vals = arr(value)
-  const cur  = vals[0] ?? ''
+const ESTADO_META = {
+  'Borrador':    { dot: '#94a3b8', bg: '#f8fafc', border: '#cbd5e1', text: '#475569' },
+  'En revisión': { dot: '#f59e0b', bg: '#fffbeb', border: '#fcd34d', text: '#92400e' },
+  'Aprobado':    { dot: '#10b981', bg: '#f0fdf4', border: '#6ee7b7', text: '#065f46' },
+  'Publicado':   { dot: '#0ea5e9', bg: '#f0f9ff', border: '#7dd3fc', text: '#0c4a6e' },
+  'Cancelado':   { dot: '#ef4444', bg: '#fef2f2', border: '#fca5a5', text: '#991b1b' },
+}
+
+function StatusSelect({ label, value, onChange, disabled }) {
+  const estados = ['Borrador', 'En revisión', 'Aprobado', 'Publicado', 'Cancelado']
+  const cur = arr(value)[0] ?? 'Borrador'
   return (
-    <div>
+    <div className="col-span-2">
       <Label className="text-xs text-muted-foreground uppercase tracking-wider">{label}</Label>
-      <select
-        value={cur}
-        onChange={e => onChange([e.target.value].filter(Boolean))}
-        className="mt-1 w-full text-sm border rounded-md px-2 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-      >
-        <option value="">{placeholder ?? '–'}</option>
-        {options.map(opt => {
-          const key = getKey ? getKey(opt) : opt
-          const lbl = getLabel ? getLabel(opt) : opt
-          return <option key={key} value={key}>{lbl}</option>
+      <div className="mt-1.5 flex flex-wrap gap-2">
+        {estados.map(e => {
+          const m = ESTADO_META[e] ?? { dot: '#94a3b8', bg: '#f8fafc', border: '#cbd5e1', text: '#475569' }
+          const sel = cur === e
+          return (
+            <button
+              key={e}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange([e])}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all font-medium disabled:opacity-50"
+              style={sel
+                ? { background: m.bg, borderColor: m.border, color: m.text, boxShadow: `0 0 0 1px ${m.border}` }
+                : { background: 'white', borderColor: '#e2e8f0', color: '#94a3b8' }
+              }
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0 transition-colors"
+                style={{ background: sel ? m.dot : '#e2e8f0' }} />
+              {e}
+            </button>
+          )
         })}
-      </select>
+      </div>
     </div>
   )
 }
@@ -158,7 +177,7 @@ export default function CommModal({ open, onClose, initial = null }) {
   const alcances     = settings.alcances  ?? ['Global','Local']
   const ubicaciones  = settings.ubicaciones ?? ['Oficina','Operaciones']
   const formatos     = settings.formatos  ?? ['Email','Post','Video','Encuesta','Carrusel']
-  const estados      = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
+  // estados definidos en ESTADO_META arriba
 
   const editable = authLoading || isNew || canEditCountry(arr(form.pais))
 
@@ -213,12 +232,11 @@ export default function CommModal({ open, onClose, initial = null }) {
           </div>
 
           {/* Estado */}
-          <SingleSelect
+          <StatusSelect
             label={t('modal.estado')}
-            options={estados}
             value={form.estado}
             onChange={v => set('estado', v)}
-            placeholder={t('modal.selectPlaceholder')}
+            disabled={!editable}
           />
 
           {/* País */}
@@ -266,40 +284,45 @@ export default function CommModal({ open, onClose, initial = null }) {
           </div>
 
           {/* Formato */}
-          <SingleSelect
-            label={t('modal.formato')}
-            options={formatos}
-            value={form.formato}
-            onChange={v => set('formato', v)}
-            placeholder={t('modal.selectPlaceholder')}
-          />
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.formato')}
+              options={formatos}
+              value={form.formato}
+              onChange={v => set('formato', v)}
+            />
+          </div>
 
           {/* Alcance */}
-          <SingleSelect
-            label={t('modal.alcance')}
-            options={alcances}
-            value={form.alcance}
-            onChange={v => set('alcance', v)}
-            placeholder={t('modal.selectPlaceholder')}
-          />
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.alcance')}
+              options={alcances}
+              value={form.alcance}
+              onChange={v => set('alcance', v)}
+              colorFn={k => k === 'Global' ? '#7c3aed' : k === 'Local' ? '#0891b2' : undefined}
+            />
+          </div>
 
           {/* Idioma */}
-          <SingleSelect
-            label={t('modal.idioma')}
-            options={idiomas}
-            value={form.idioma}
-            onChange={v => set('idioma', v)}
-            placeholder={t('modal.selectPlaceholder')}
-          />
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.idioma')}
+              options={idiomas}
+              value={form.idioma}
+              onChange={v => set('idioma', v)}
+            />
+          </div>
 
           {/* Ubicación */}
-          <SingleSelect
-            label={t('modal.ubicacion')}
-            options={ubicaciones}
-            value={form.ubicacion}
-            onChange={v => set('ubicacion', v)}
-            placeholder={t('modal.selectPlaceholder')}
-          />
+          <div className="col-span-2">
+            <MultiSelect
+              label={t('modal.ubicacion')}
+              options={ubicaciones}
+              value={form.ubicacion}
+              onChange={v => set('ubicacion', v)}
+            />
+          </div>
 
           {/* Destacado */}
           <div className="col-span-2 flex items-center gap-3">
