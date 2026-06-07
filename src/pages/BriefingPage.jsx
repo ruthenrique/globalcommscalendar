@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
-import { CalendarDays, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { CalendarDays } from 'lucide-react'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr } from '@/lib/utils'
 import { COUNTRY_META, STATUS_META, CHANNEL_META } from '@/lib/constants'
+import CommModal from '@/components/CommModal'
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const DAYS_ES   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
@@ -15,7 +16,7 @@ function addDays(ds, n) {
   return d.toISOString().slice(0, 10)
 }
 
-function CommCard({ c }) {
+function CommCard({ c, onOpen }) {
   const paises = arr(c.pais)
   const status = arr(c.estado)[0]
   const canal  = arr(c.canal)[0]
@@ -23,7 +24,8 @@ function CommCard({ c }) {
   const chMeta = CHANNEL_META[canal] ?? {}
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-default"
+      onClick={() => onOpen(c)}
+      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-pointer group"
     >
       <div className="flex-shrink-0 text-base leading-none w-8 text-center">
         {paises.slice(0, 2).map(p => COUNTRY_META[p]?.flag ?? '').join('') || '🌐'}
@@ -48,11 +50,12 @@ function CommCard({ c }) {
       >
         {status}
       </span>
+      <span className="text-gray-200 group-hover:text-gray-400 transition-colors flex-shrink-0 text-base leading-none">›</span>
     </div>
   )
 }
 
-function DayBlock({ ds, comms, isToday }) {
+function DayBlock({ ds, comms, isToday, onOpen }) {
   const d = new Date(ds + 'T00:00:00')
   const label = isToday
     ? `HOY — ${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
@@ -89,7 +92,7 @@ function DayBlock({ ds, comms, isToday }) {
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{canal}</span>
               </div>
               <div className="space-y-1.5">
-                {evs.map(c => <CommCard key={c.id} c={c} />)}
+                {evs.map(c => <CommCard key={c.id} c={c} onOpen={onOpen} />)}
               </div>
             </div>
           ))}
@@ -102,6 +105,7 @@ function DayBlock({ ds, comms, isToday }) {
 export default function BriefingPage() {
   const { communications } = useApp()
   const { role, myCountries } = useAuth()
+  const [editComm, setEditComm] = useState(null)
 
   const mine = useMemo(() => {
     const isRestricted = role !== 'super_admin' && myCountries.length > 0
@@ -147,7 +151,7 @@ export default function BriefingPage() {
         <div className="max-w-2xl mx-auto px-6 py-6">
           {days.map(({ ds, comms, isToday }) => (
             (comms.length > 0 || isToday) && (
-              <DayBlock key={ds} ds={ds} comms={comms} isToday={isToday} />
+              <DayBlock key={ds} ds={ds} comms={comms} isToday={isToday} onOpen={setEditComm} />
             )
           ))}
           {days.every(d => d.comms.length === 0) && (
@@ -159,6 +163,12 @@ export default function BriefingPage() {
           )}
         </div>
       </div>
+
+      <CommModal
+        open={!!editComm}
+        onClose={() => setEditComm(null)}
+        initial={editComm}
+      />
     </div>
   )
 }

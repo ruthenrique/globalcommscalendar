@@ -246,16 +246,12 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Features grid */}
+          {/* Features grid — solo las disponibles para este rol */}
           <div className="mb-10">
-            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Funcionalidades de la plataforma</h2>
+            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Funcionalidades disponibles para vos</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {FEATURES.map(f => (
-                <FeatureCard
-                  key={f.id}
-                  feature={f}
-                  available={f.roles.includes(role ?? 'viewer')}
-                />
+              {FEATURES.filter(f => f.roles.includes(role ?? 'viewer')).map(f => (
+                <FeatureCard key={f.id} feature={f} available={true} />
               ))}
             </div>
           </div>
