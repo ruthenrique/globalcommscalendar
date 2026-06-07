@@ -183,7 +183,7 @@ export default function CommModal({ open, onClose, initial = null }) {
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
         {/* Drag handle — solo mobile */}
         <div className="sm:hidden w-10 h-1 rounded-full bg-gray-200 mx-auto -mt-1 mb-3" />
 
