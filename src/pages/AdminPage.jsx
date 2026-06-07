@@ -387,9 +387,10 @@ export default function AdminPage() {
             table="categories"
             label="Categoría"
             fields={[
-              { key: 'name',     label: 'Nombre',    type: 'text'  },
-              { key: 'color',    label: 'Color',     type: 'color' },
-              { key: 'bg_color', label: 'Fondo',     type: 'color' },
+              { key: 'name',       label: 'Nombre',    type: 'text'  },
+              { key: 'color',      label: 'Color',     type: 'color' },
+              { key: 'bg_color',   label: 'Fondo',     type: 'color' },
+              { key: 'sort_order', label: 'Orden',     type: 'text'  },
             ]}
           />
         )}

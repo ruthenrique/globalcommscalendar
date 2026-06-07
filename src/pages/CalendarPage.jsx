@@ -249,9 +249,19 @@ function CountryAlert({ comms, dateStrs }) {
 }
 
 // ── Month view ────────────────────────────────────────────
-function MonthView({ year, month, communications, filters, today, lang, canEdit, onClickCard, onAdd, onDragStart, onDrop }) {
+function MonthView({ year, month, communications, filters, today, lang, canEdit, onClickCard, onAdd, onDragStart, onDrop, isMobile }) {
+  const { t } = useTranslation()
   const [dragOver, setDragOver] = useState(null)
   const dowLabels = getMonFirstLabels(lang)
+
+  const todayInMonth = today.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
+  const [mobileDay, setMobileDay] = useState(() =>
+    todayInMonth ? today : `${year}-${String(month + 1).padStart(2, '0')}-01`
+  )
+  useEffect(() => {
+    const inMonth = today.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)
+    setMobileDay(inMonth ? today : `${year}-${String(month + 1).padStart(2, '0')}-01`)
+  }, [year, month])
 
   const weeks = useMemo(() => {
     const firstDay  = new Date(year, month, 1)
@@ -280,6 +290,84 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
     const map = {}; filtered.forEach(ev => { if (!map[ev.date]) map[ev.date] = []; map[ev.date].push(ev) }); return map
   }, [filtered])
 
+  // ── Mobile layout: compact grid + day list ────────────
+  if (isMobile) {
+    const mobileDayEvs = byDate[mobileDay] ?? []
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Compact month grid */}
+        <div className="flex-shrink-0 border-b border-gray-100">
+          <div className="grid grid-cols-7 border-b border-gray-100">
+            {dowLabels.map((d, i) => (
+              <div key={i} className="text-center py-1.5 text-[9px] uppercase tracking-widest text-gray-400 font-medium">{d}</div>
+            ))}
+          </div>
+          {weeks.map((week, wi) => (
+            <div key={wi} className="grid grid-cols-7">
+              {week.map(d => {
+                const ds = dateStr(d)
+                const isCurrentMonth = d.getMonth() === month && d.getFullYear() === year
+                const isTod = ds === today
+                const isSel = ds === mobileDay
+                const evs = byDate[ds] ?? []
+                const dots = [...new Set(evs.map(ev => STATUS_META[arr(ev.estado)[0]]?.dot ?? '#94a3b8'))].slice(0, 3)
+                return (
+                  <div
+                    key={ds}
+                    className={cn('flex flex-col items-center py-1 cursor-pointer transition-colors', isSel && !isTod ? 'bg-sky-50' : '')}
+                    onClick={() => isCurrentMonth && setMobileDay(ds)}
+                  >
+                    <div className={cn('text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full',
+                      isTod ? 'bg-sky-500 text-white' :
+                      isSel ? 'bg-sky-100 text-sky-700 font-bold' :
+                      !isCurrentMonth ? 'text-gray-300' : 'text-gray-700'
+                    )}>
+                      {d.getDate()}
+                    </div>
+                    <div className="flex gap-0.5 mt-0.5 h-1.5 items-center">
+                      {dots.map((col, i) => (
+                        <span key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: col }} />
+                      ))}
+                      {evs.length > 3 && <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Day events list */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <div className="text-xs font-semibold text-gray-500 mb-3">
+            {dayLabel(mobileDay, lang, true)}
+            {mobileDayEvs.length > 0 && (
+              <span className="ml-2 text-[10px] font-normal text-gray-400">{mobileDayEvs.length} comm{mobileDayEvs.length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
+          {mobileDayEvs.length === 0 ? (
+            <div className="text-xs text-gray-400 text-center py-8">{t('calendar.noComms')}</div>
+          ) : (
+            <div className="space-y-2">
+              {mobileDayEvs.map(ev => (
+                <EventCard key={ev.id} ev={ev} compact={false} status_t={arr(ev.estado)[0] ?? ''} onClick={() => onClickCard(ev)} onDragStart={() => {}} />
+              ))}
+            </div>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => onAdd(mobileDay)}
+              className="w-full mt-3 flex items-center justify-center gap-1 text-xs text-sky-600 py-2.5 rounded-xl border border-dashed border-sky-200 hover:bg-sky-50 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t('calendar.new')}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Desktop layout ────────────────────────────────────
   return (
     <div className="flex flex-col h-full overflow-auto">
       <div className="grid grid-cols-7 border-b border-gray-100 flex-shrink-0">
@@ -973,6 +1061,7 @@ export default function CalendarPage() {
             communications={searchedComms} filters={filters} today={today} lang={lang}
             canEdit={perms.canEdit} onClickCard={openEdit} onAdd={ds => openNew('', ds)}
             onDragStart={id => setDragId(id)} onDrop={handleMonthDrop}
+            isMobile={isMobile}
           />
         )}
       </div>
