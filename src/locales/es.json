@@ -4,7 +4,9 @@
     "an":    "Analytics",
     "data":  "Data Master",
     "map":   "Dashboard",
-    "admin": "Administración"
+    "admin": "Administración",
+    "brief": "Briefing",
+    "about": "Acerca de"
   },
   "sidebar": {
     "subtitle": "BSG",
