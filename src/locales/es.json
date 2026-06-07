@@ -112,5 +112,137 @@
     "admin": "Administración",
     "brief": "Briefing",
     "about": "Acerca de"
+  },
+  "dash": {
+    "kpi": {
+      "total":    "Total",
+      "approved": "Aprobadas",
+      "published":"Publicadas",
+      "featured": "Destacadas",
+      "drafts":   "Borradores",
+      "comms":    "comunicaciones",
+      "featuredContent": "contenido destacado",
+      "ofTotal":  "% del total"
+    },
+    "noChange":  "Sin cambio",
+    "vsPrev":    "vs mes anterior",
+    "noData":    "Sin datos",
+    "less":      "Menos",
+    "more":      "Más",
+    "insights": {
+      "activeDay":          "día más activo de la semana",
+      "topTopic":           "tópico líder en {{month}}",
+      "topChannelPct":      "concentra el {{pct}}% del contenido",
+      "topChannelFallback": "canal más usado",
+      "approvalRate":       "tasa de aprobación (aprobado + publicado)",
+      "noComms":            "sin comunicaciones en el período"
+    },
+    "sections": {
+      "trend":        "Tendencia mensual",
+      "trendSub":     "Año {{year}}",
+      "channelMix":   "Mix de canales",
+      "activity":     "Actividad",
+      "activitySub":  "Frecuencia de publicación — últimas 18 semanas",
+      "topics":       "Tópicos",
+      "topicsSub":    "Distribución por tema",
+      "formats":      "Formatos",
+      "formatsSub":   "Tipo de piezas",
+      "status":       "Estado",
+      "statusSub":    "Pipeline de aprobación",
+      "byCountry":    "Por país",
+      "byCountrySub": "Volumen por unidad",
+      "matrix":       "Matriz país × canal",
+      "matrixSub":    "Combinación de alcance y canal"
+    }
+  },
+  "dm": {
+    "importTitle":       "Importar comunicaciones",
+    "importDesc":        "CSV con columnas: Título, Fecha, País, Canal, Segmento, Tópico, Formato, Idioma, Alcance, Estado, Destacado",
+    "selectFile":        "Seleccioná un archivo CSV",
+    "dragDrop":          "O arrastrá y soltá aquí",
+    "recordsFound":      "{{count}} registros encontrados",
+    "changeFile":        "Cambiar archivo",
+    "moreRecords":       "... y {{n}} registros más",
+    "importing":         "Importando...",
+    "importDone":        "{{done}} de {{total}} registros importados",
+    "errors":            "{{count}} error(es)",
+    "rowError":          "Fila {{row}}: {{msg}}",
+    "downloadTemplate":  "Descargar plantilla CSV",
+    "importBtn":         "Importar {{count}} registros",
+    "close":             "Cerrar",
+    "searchPlaceholder": "Buscar por título, país, canal...",
+    "records":           "{{count}} registros",
+    "selected":          "{{count}} seleccionadas",
+    "deleteConfirm":     "¿Eliminar {{count}} comunicaciones?",
+    "deleted":           "{{count}} eliminadas",
+    "exportTitle":       "Exportar planning",
+    "dateRange":         "Rango de fechas",
+    "countryHint":       "(vacío = todos)",
+    "downloadCsv":       "Descargar CSV"
+  },
+  "admin": {
+    "tabs": {
+      "users":      "👥 Usuarios",
+      "countries":  "🌍 Países",
+      "categories": "🏷️ Categorías",
+      "channels":   "📡 Canales",
+      "segments":   "👤 Segmentos",
+      "audit":      "📋 Auditoría"
+    },
+    "loadingUsers":  "Cargando usuarios…",
+    "noUsers":       "No se encontraron usuarios",
+    "noUsersHint":   "Verificá los permisos RLS de la tabla profiles en Supabase.",
+    "resetPwOk":     "Contraseña reseteada ✓",
+    "userUpdated":   "Usuario actualizado ✓",
+    "minPassword":   "Mínimo 6 caracteres",
+    "newPassword":   "Nueva contraseña"
+  },
+  "about": {
+    "tagline":      "Plataforma centralizada para planificar, gestionar y hacer seguimiento de todas las comunicaciones internas de BSG a nivel global y local.",
+    "hello":        "Hola, {{name}} 👋",
+    "yourFeatures": "Funcionalidades disponibles para vos",
+    "rolesTitle":   "Roles de acceso",
+    "yourRole":     "Tu rol",
+    "roles": {
+      "super_admin": {
+        "label":   "Super Admin",
+        "tagline": "Acceso total a la plataforma.",
+        "desc":    "Podés ver y editar todas las comunicaciones de todos los países. Gestionás usuarios, canales, segmentos y configuración global del sistema.",
+        "actions": ["✦ Crear, editar y eliminar cualquier comunicación","✦ Gestionar usuarios y resetear contraseñas","✦ Configurar canales, segmentos y tópicos","✦ Ver el Dashboard y Data Master completos","✦ Importar y exportar comunicaciones en CSV"]
+      },
+      "country_admin": {
+        "label":   "Country Admin",
+        "tagline": "Gestión completa de tu país.",
+        "desc":    "Podés ver y editar las comunicaciones de tu país más las globales (GL). Tenés capacidad de aprobar y publicar comunicaciones locales.",
+        "actions": ["✦ Crear, editar y aprobar comms de tu país","✦ Ver todas las comunicaciones globales (GL)","✦ Usar el Briefing para planificar el día","✦ Acceder a Data Master (sin eliminación masiva)","✦ Ver métricas en el Dashboard"]
+      },
+      "editor": {
+        "label":   "Editor",
+        "tagline": "Creación y edición de contenido.",
+        "desc":    "Podés crear y editar comunicaciones en todos los países, pero no eliminarlas. Tenés visibilidad completa del calendario y el dashboard.",
+        "actions": ["✦ Crear y editar comms (todos los países)","✦ Ver el calendario completo","✦ Usar el Briefing y el Dashboard","✦ Acceder a Data Master (sin eliminación)","· No podés eliminar ni gestionar usuarios"]
+      },
+      "viewer": {
+        "label":   "Viewer",
+        "tagline": "Consulta y seguimiento.",
+        "desc":    "Tenés acceso de solo lectura a las comunicaciones de tu país y las globales (GL). Podés consultar el calendario, el Briefing y ver el Dashboard.",
+        "actions": ["✦ Ver el calendario de tu país + GL","✦ Consultar el Briefing (próximos 14 días)","✦ Ver métricas en el Dashboard","· No podés crear ni editar comunicaciones","· No tenés acceso a Data Master ni Admin"]
+      }
+    },
+    "roleDescs": {
+      "super_admin":   "Acceso total. Ve y edita todas las comms de todos los países. Gestiona usuarios, canales y configuración.",
+      "country_admin": "Ve y edita las comms de su país + GL. Puede aprobar y publicar comunicaciones locales.",
+      "editor":        "Puede crear y editar comms pero no eliminar. Ve todas las comunicaciones.",
+      "viewer":        "Solo lectura. Ve las comunicaciones de su país + GL pero no puede modificarlas."
+    },
+    "features": {
+      "cal":    { "title": "Calendario",      "subtitle": "Vista Semana · Día · Mes",        "desc": "Planificá y visualizá todas las comunicaciones internas y externas por canal y país. Drag & drop para mover fechas, filtros por país, canal y estado.",    "tips": ["Vista semana y día para el día a día","Vista mes para planificación estratégica","Click en la fecha para navegar rápido","Semáforo 🚩 cuando un país está saturado"] },
+      "brief":  { "title": "Briefing",        "subtitle": "Próximos 14 días",                "desc": "Resumen diario de todo lo que sale. Ideal para arrancar el día sabiendo exactamente qué se envía, por qué canal y a qué segmento.",                      "tips": ["Filtrado automático por tu país","Agrupado por canal para claridad","Próximos 14 días de un vistazo","Estado de cada comunicación en tiempo real"] },
+      "map":    { "title": "Dashboard",       "subtitle": "KPIs · Tendencias · Insights",    "desc": "Métricas clave de tu planning de comunicación: total de comms, tasa de aprobación, canales más usados, distribución por país y evolución mensual.",       "tips": ["5 KPIs principales arriba","Tendencia mensual con AreaChart","Heatmap de actividad (últimas 18 semanas)","Filtros por país, canal, estado y tópico"] },
+      "data":   { "title": "Data Master",     "subtitle": "Tabla · Export · Import",         "desc": "Vista tabular de todas las comunicaciones. Buscá, filtrá, editá en línea. Importá desde CSV y exportá el planning con filtros de fecha y país.",           "tips": ["Búsqueda en tiempo real","Export con filtros de fecha y país","Import masivo desde CSV","Eliminación múltiple (solo super admin)"] },
+      "notif":  { "title": "Notificaciones",  "subtitle": "Alertas inteligentes",            "desc": "Centro de alertas contextual que te avisa sobre comms vencidas, pendientes de aprobación, planificadas para hoy o en borrador para mañana.",              "tips": ["⏰ Vencidas sin publicar","⚠️ Mañana en Borrador","📅 Planificadas hoy","📋 Pendientes de aprobación"] },
+      "admin":  { "title": "Administración",  "subtitle": "Usuarios · Config · Auditoría",   "desc": "Panel de gestión de usuarios, países, canales y segmentos. Incluye auditoría completa de cambios y reset de contraseñas.",                               "tips": ["Gestión de usuarios y roles","Configuración de canales y segmentos","Log de auditoría completo","Reset de contraseñas (super admin)"] },
+      "global": { "title": "Multi-país",      "subtitle": "Global · Local · Filtros",        "desc": "Cada usuario ve automáticamente las comunicaciones de su país + GL (Global). Los super admins ven todo. El prefiltro es configurable.",                   "tips": ["GL = comunicaciones globales","Prefiltro automático por rol","Filtros manuales en calendario","Saturación visible por país y día"] }
+    }
   }
 }

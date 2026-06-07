@@ -112,5 +112,137 @@
     "admin": "Administration",
     "brief": "Briefing",
     "about": "About"
+  },
+  "dash": {
+    "kpi": {
+      "total":    "Total",
+      "approved": "Approved",
+      "published":"Published",
+      "featured": "Featured",
+      "drafts":   "Drafts",
+      "comms":    "communications",
+      "featuredContent": "featured content",
+      "ofTotal":  "% of total"
+    },
+    "noChange":  "No change",
+    "vsPrev":    "vs previous month",
+    "noData":    "No data",
+    "less":      "Less",
+    "more":      "More",
+    "insights": {
+      "activeDay":          "most active day of the week",
+      "topTopic":           "top topic in {{month}}",
+      "topChannelPct":      "holds {{pct}}% of content",
+      "topChannelFallback": "most used channel",
+      "approvalRate":       "approval rate (approved + published)",
+      "noComms":            "no communications in the period"
+    },
+    "sections": {
+      "trend":        "Monthly trend",
+      "trendSub":     "Year {{year}}",
+      "channelMix":   "Channel mix",
+      "activity":     "Activity",
+      "activitySub":  "Publishing frequency — last 18 weeks",
+      "topics":       "Topics",
+      "topicsSub":    "Distribution by topic",
+      "formats":      "Formats",
+      "formatsSub":   "Content types",
+      "status":       "Status",
+      "statusSub":    "Approval pipeline",
+      "byCountry":    "By country",
+      "byCountrySub": "Volume by unit",
+      "matrix":       "Country × channel matrix",
+      "matrixSub":    "Scope and channel combination"
+    }
+  },
+  "dm": {
+    "importTitle":       "Import communications",
+    "importDesc":        "CSV with columns: Title, Date, Country, Channel, Segment, Topic, Format, Language, Scope, Status, Featured",
+    "selectFile":        "Select a CSV file",
+    "dragDrop":          "Or drag and drop here",
+    "recordsFound":      "{{count}} records found",
+    "changeFile":        "Change file",
+    "moreRecords":       "... and {{n}} more records",
+    "importing":         "Importing...",
+    "importDone":        "{{done}} of {{total}} records imported",
+    "errors":            "{{count}} error(s)",
+    "rowError":          "Row {{row}}: {{msg}}",
+    "downloadTemplate":  "Download CSV template",
+    "importBtn":         "Import {{count}} records",
+    "close":             "Close",
+    "searchPlaceholder": "Search by title, country, channel...",
+    "records":           "{{count}} records",
+    "selected":          "{{count}} selected",
+    "deleteConfirm":     "Delete {{count}} communications?",
+    "deleted":           "{{count}} deleted",
+    "exportTitle":       "Export planning",
+    "dateRange":         "Date range",
+    "countryHint":       "(empty = all)",
+    "downloadCsv":       "Download CSV"
+  },
+  "admin": {
+    "tabs": {
+      "users":      "👥 Users",
+      "countries":  "🌍 Countries",
+      "categories": "🏷️ Categories",
+      "channels":   "📡 Channels",
+      "segments":   "👤 Segments",
+      "audit":      "📋 Audit"
+    },
+    "loadingUsers":  "Loading users…",
+    "noUsers":       "No users found",
+    "noUsersHint":   "Check the RLS policies on the profiles table in Supabase.",
+    "resetPwOk":     "Password reset ✓",
+    "userUpdated":   "User updated ✓",
+    "minPassword":   "Minimum 6 characters",
+    "newPassword":   "New password"
+  },
+  "about": {
+    "tagline":      "Centralized platform for planning, managing and tracking all internal BSG communications globally and locally.",
+    "hello":        "Hi, {{name}} 👋",
+    "yourFeatures": "Features available for you",
+    "rolesTitle":   "Access roles",
+    "yourRole":     "Your role",
+    "roles": {
+      "super_admin": {
+        "label":   "Super Admin",
+        "tagline": "Full platform access.",
+        "desc":    "You can view and edit all communications across all countries. You manage users, channels, segments and global system configuration.",
+        "actions": ["✦ Create, edit and delete any communication","✦ Manage users and reset passwords","✦ Configure channels, segments and topics","✦ Full access to Dashboard and Data Master","✦ Import and export communications via CSV"]
+      },
+      "country_admin": {
+        "label":   "Country Admin",
+        "tagline": "Full management of your country.",
+        "desc":    "You can view and edit communications for your country plus global ones (GL). You can approve and publish local communications.",
+        "actions": ["✦ Create, edit and approve comms for your country","✦ View all global communications (GL)","✦ Use Briefing to plan your day","✦ Access Data Master (no bulk delete)","✦ View metrics in the Dashboard"]
+      },
+      "editor": {
+        "label":   "Editor",
+        "tagline": "Content creation and editing.",
+        "desc":    "You can create and edit communications across all countries, but cannot delete them. You have full visibility of the calendar and dashboard.",
+        "actions": ["✦ Create and edit comms (all countries)","✦ View the full calendar","✦ Use Briefing and Dashboard","✦ Access Data Master (no delete)","· Cannot delete or manage users"]
+      },
+      "viewer": {
+        "label":   "Viewer",
+        "tagline": "Read-only access.",
+        "desc":    "You have read-only access to your country's communications and global ones (GL). You can browse the calendar, Briefing and view the Dashboard.",
+        "actions": ["✦ View your country's calendar + GL","✦ Browse Briefing (next 14 days)","✦ View metrics in the Dashboard","· Cannot create or edit communications","· No access to Data Master or Admin"]
+      }
+    },
+    "roleDescs": {
+      "super_admin":   "Full access. Views and edits all comms across all countries. Manages users, channels and configuration.",
+      "country_admin": "Views and edits comms for their country + GL. Can approve and publish local communications.",
+      "editor":        "Can create and edit comms but not delete. Views all communications.",
+      "viewer":        "Read-only. Views their country's comms + GL but cannot modify them."
+    },
+    "features": {
+      "cal":    { "title": "Calendar",       "subtitle": "Week · Day · Month view",           "desc": "Plan and visualize all internal and external communications by channel and country. Drag & drop to move dates, filter by country, channel and status.",   "tips": ["Week and day view for daily use","Month view for strategic planning","Click on the date to navigate quickly","Traffic light 🚩 when a country is saturated"] },
+      "brief":  { "title": "Briefing",       "subtitle": "Next 14 days",                      "desc": "Daily summary of everything going out. Ideal for starting the day knowing exactly what's being sent, through which channel and to which segment.",       "tips": ["Auto-filtered by your country","Grouped by channel for clarity","Next 14 days at a glance","Live status of each communication"] },
+      "map":    { "title": "Dashboard",      "subtitle": "KPIs · Trends · Insights",          "desc": "Key metrics for your communication planning: total comms, approval rate, most used channels, country distribution and monthly evolution.",                "tips": ["5 main KPIs at the top","Monthly trend with AreaChart","Activity heatmap (last 18 weeks)","Filters by country, channel, status and topic"] },
+      "data":   { "title": "Data Master",    "subtitle": "Table · Export · Import",           "desc": "Tabular view of all communications. Search, filter, inline edit. Import from CSV and export the planning with date and country filters.",                  "tips": ["Real-time search","Export with date and country filters","Bulk import from CSV","Multiple delete (super admin only)"] },
+      "notif":  { "title": "Notifications",  "subtitle": "Smart alerts",                      "desc": "Contextual alert center that notifies you about overdue comms, pending approval, scheduled for today or in draft for tomorrow.",                          "tips": ["⏰ Overdue unpublished","⚠️ Tomorrow in Draft","📅 Scheduled today","📋 Pending approval"] },
+      "admin":  { "title": "Administration", "subtitle": "Users · Config · Audit",            "desc": "User, country, channel and segment management panel. Includes full change audit log and password reset.",                                                  "tips": ["User and role management","Channel and segment configuration","Full audit log","Password reset (super admin)"] },
+      "global": { "title": "Multi-country",  "subtitle": "Global · Local · Filters",          "desc": "Each user automatically sees their country's communications + GL (Global). Super admins see everything. The pre-filter is configurable.",                  "tips": ["GL = global communications","Auto pre-filter by role","Manual filters in calendar","Saturation visible by country and day"] }
+    }
   }
 }

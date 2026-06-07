@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search, Plus, Edit2, Trash2, Download, Upload, X, AlertCircle, CheckCircle2, FileDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,6 +91,7 @@ function parseCSV(text) {
 
 // ── Import modal ──────────────────────────────────────────
 function ImportModal({ open, onClose, onImport }) {
+  const { t } = useTranslation()
   const fileRef   = useRef(null)
   const [rows,     setRows]     = useState([])
   const [fileName, setFileName] = useState('')
@@ -140,8 +142,8 @@ function ImportModal({ open, onClose, onImport }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
-            <h2 className="font-semibold text-sm text-gray-800">Importar comunicaciones</h2>
-            <p className="text-xs text-gray-400 mt-0.5">CSV con columnas: Título, Fecha, País, Canal, Segmento, Tópico, Formato, Idioma, Alcance, Estado, Destacado</p>
+            <h2 className="font-semibold text-sm text-gray-800">{t('dm.importTitle')}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">{t('dm.importDesc')}</p>
           </div>
           <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
             <X className="h-4 w-4" />
@@ -155,8 +157,8 @@ function ImportModal({ open, onClose, onImport }) {
           {status === 'idle' && (
             <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-10 cursor-pointer hover:border-sky-300 hover:bg-sky-50/30 transition-colors">
               <Upload className="h-8 w-8 text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500 font-medium">Seleccioná un archivo CSV</p>
-              <p className="text-xs text-gray-400 mt-1">O arrastrá y soltá aquí</p>
+              <p className="text-sm text-gray-500 font-medium">{t('dm.selectFile')}</p>
+              <p className="text-xs text-gray-400 mt-1">{t('dm.dragDrop')}</p>
               <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
             </label>
           )}
@@ -166,10 +168,10 @@ function ImportModal({ open, onClose, onImport }) {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span className="font-medium text-gray-700">{rows.length} registros encontrados</span>
+                <span className="font-medium text-gray-700">{t('dm.recordsFound', { count: rows.length })}</span>
                 <span className="text-gray-400 text-xs">en {fileName}</span>
                 <button onClick={reset} className="ml-auto text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1">
-                  <X className="h-3 w-3" /> Cambiar archivo
+                  <X className="h-3 w-3" /> {t('dm.changeFile')}
                 </button>
               </div>
 
@@ -199,7 +201,7 @@ function ImportModal({ open, onClose, onImport }) {
                 </div>
                 {rows.length > 20 && (
                   <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 bg-gray-50">
-                    ... y {rows.length - 20} registros más
+                    {t('dm.moreRecords', { n: rows.length - 20 })}
                   </div>
                 )}
               </div>
@@ -210,7 +212,7 @@ function ImportModal({ open, onClose, onImport }) {
           {status === 'importing' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 font-medium">Importando...</span>
+                <span className="text-gray-700 font-medium">{t('dm.importing')}</span>
                 <span className="text-gray-400 text-xs">{progress.done} / {progress.total}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -228,16 +230,16 @@ function ImportModal({ open, onClose, onImport }) {
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                 <span className="font-semibold text-gray-800">
-                  {progress.done - progress.errors.length} de {progress.total} registros importados
+                  {t('dm.importDone', { done: progress.done - progress.errors.length, total: progress.total })}
                 </span>
               </div>
               {progress.errors.length > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-                    <AlertCircle className="h-3.5 w-3.5" /> {progress.errors.length} error{progress.errors.length > 1 ? 'es' : ''}
+                    <AlertCircle className="h-3.5 w-3.5" /> {t('dm.errors', { count: progress.errors.length })}
                   </div>
                   {progress.errors.slice(0, 5).map(e => (
-                    <div key={e.row} className="text-xs text-amber-600">Fila {e.row}: {e.msg}</div>
+                    <div key={e.row} className="text-xs text-amber-600">{t('dm.rowError', { row: e.row, msg: e.msg })}</div>
                   ))}
                 </div>
               )}
@@ -252,17 +254,17 @@ function ImportModal({ open, onClose, onImport }) {
             download="commos-template.csv"
             className="text-xs text-sky-600 hover:text-sky-800 underline underline-offset-2"
           >
-            Descargar plantilla CSV
+            {t('dm.downloadTemplate')}
           </a>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleClose}>Cancelar</Button>
+            <Button size="sm" variant="outline" onClick={handleClose}>{t('modal.cancel')}</Button>
             {status === 'preview' && (
               <Button size="sm" onClick={handleImport}>
-                <Upload className="h-3.5 w-3.5 mr-1" /> Importar {rows.length} registros
+                <Upload className="h-3.5 w-3.5 mr-1" /> {t('dm.importBtn', { count: rows.length })}
               </Button>
             )}
             {status === 'done' && (
-              <Button size="sm" onClick={handleClose}>Cerrar</Button>
+              <Button size="sm" onClick={handleClose}>{t('dm.close')}</Button>
             )}
           </div>
         </div>
@@ -273,6 +275,7 @@ function ImportModal({ open, onClose, onImport }) {
 
 // ── Main page ─────────────────────────────────────────────
 export default function DataMasterPage() {
+  const { t } = useTranslation()
   const { communications, deleteComm, createComm } = useApp()
   const { perms, canEditCountry, role, myCountries } = useAuth()
 
@@ -324,10 +327,11 @@ export default function DataMasterPage() {
   }
 
   async function deleteSelected() {
-    if (!confirm(`¿Eliminar ${selIds.size} comunicaciones?`)) return
+    const count = selIds.size
+    if (!confirm(t('dm.deleteConfirm', { count }))) return
     for (const id of selIds) await deleteComm(id)
     setSelIds(new Set())
-    toast({ title: `${selIds.size} eliminadas`, variant: 'success' })
+    toast({ title: t('dm.deleted', { count }), variant: 'success' })
   }
 
   function exportCSV() {
@@ -372,13 +376,13 @@ export default function DataMasterPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por título, país, canal..."
+            placeholder={t('dm.searchPlaceholder')}
             className="pl-8 h-8 text-xs"
           />
         </div>
 
         <span className="text-xs text-muted-foreground">
-          {filtered.length} {filtered.length !== visibleComms.length ? `de ${visibleComms.length}` : ''} registros
+          {t('dm.records', { count: filtered.length })}{filtered.length !== visibleComms.length ? ` / ${visibleComms.length}` : ''}
           {!isSuperAdmin && myCountries.length > 0 && (
             <span className="ml-1 text-sky-600 font-medium">
               · {myCountries.map(c => COUNTRY_META[c]?.flag ?? c).join(' ')} + 🌍 GL
@@ -388,7 +392,7 @@ export default function DataMasterPage() {
 
         {selIds.size > 0 && (
           <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
-            <span>{selIds.size} seleccionadas</span>
+            <span>{t('dm.selected', { count: selIds.size })}</span>
             {isSuperAdmin && (
               <button onClick={deleteSelected} className="text-red-600 hover:text-red-800 font-medium">Eliminar</button>
             )}
@@ -559,6 +563,7 @@ function Chips({ options, value, onChange }) {
 }
 
 function ExportModal({ communications, onClose }) {
+  const { t } = useTranslation()
   const today = new Date().toISOString().slice(0, 10)
   const [from,   setFrom]   = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0,10) })
   const [to,     setTo]     = useState(() => { const d = new Date(); d.setMonth(d.getMonth()+1, 0); return d.toISOString().slice(0,10) })
@@ -602,7 +607,7 @@ function ExportModal({ communications, onClose }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <FileDown className="h-4 w-4 text-gray-700" />
-            <span className="font-bold text-gray-900 tracking-tight">Exportar planning</span>
+            <span className="font-bold text-gray-900 tracking-tight">{t('dm.exportTitle')}</span>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="h-3.5 w-3.5" /></button>
         </div>
@@ -610,7 +615,7 @@ function ExportModal({ communications, onClose }) {
         <div className="px-5 py-4 space-y-4">
           {/* Date range */}
           <div>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Rango de fechas</label>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t('dm.dateRange')}</label>
             <div className="flex gap-2 mt-1.5">
               <input type="date" value={from} onChange={e => setFrom(e.target.value)}
                 className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-gray-400" />
@@ -622,19 +627,19 @@ function ExportModal({ communications, onClose }) {
 
           {/* País */}
           <div>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">País <span className="text-gray-300 font-normal normal-case">(vacío = todos)</span></label>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t('filter.country')} <span className="text-gray-300 font-normal normal-case">{t('dm.countryHint')}</span></label>
             <Chips options={paisOptions} value={países} onChange={setPaises} />
           </div>
 
           {/* Estado */}
           <div>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Estado</label>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t('filter.status')}</label>
             <Chips options={estadoOptions} value={estado} onChange={setEstado} />
           </div>
 
           {/* Canal */}
           <div>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Canal</label>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{t('filter.channel')}</label>
             <Chips options={canalOptions} value={canal} onChange={setCanal} />
           </div>
         </div>
@@ -645,13 +650,13 @@ function ExportModal({ communications, onClose }) {
             <span className="font-bold text-gray-900 text-sm">{preview.length}</span> comms
           </span>
           <div className="flex gap-2">
-            <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100">Cancelar</button>
+            <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100">{t('modal.cancel')}</button>
             <button
               onClick={doExport}
               disabled={preview.length === 0}
               className="text-sm bg-gray-900 text-white px-4 py-1.5 rounded-lg hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed font-medium flex items-center gap-1.5"
             >
-              <FileDown className="h-3.5 w-3.5" /> Descargar CSV
+              <FileDown className="h-3.5 w-3.5" /> {t('dm.downloadCsv')}
             </button>
           </div>
         </div>

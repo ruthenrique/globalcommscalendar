@@ -1,4 +1,5 @@
 import { useState, useEffect, Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Edit2, Trash2, Save, X, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ const ADMIN_TABS = [
 
 // ── Users Panel ─────────────────────────────────────
 function UsersPanel() {
+  const { t } = useTranslation()
   const { myCountries, role } = useAuth()
   const { countries } = useApp()
   const [users,      setUsers]      = useState([])
@@ -29,14 +31,14 @@ function UsersPanel() {
   const [resetPw,    setResetPw]    = useState({ email: null, value: '' })
 
   async function handleResetPw() {
-    if (resetPw.value.length < 6) return toast({ title: 'Mínimo 6 caracteres', variant: 'destructive' })
+    if (resetPw.value.length < 6) return toast({ title: t('admin.minPassword'), variant: 'destructive' })
     const { error } = await supabase.rpc('admin_reset_password', {
       p_email: resetPw.email,
       p_new_password: resetPw.value,
     })
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' })
     else {
-      toast({ title: 'Contraseña reseteada ✓', variant: 'success' })
+      toast({ title: t('admin.resetPwOk'), variant: 'success' })
       setResetPw({ email: null, value: '' })
     }
   }
@@ -60,19 +62,19 @@ function UsersPanel() {
     else {
       setUsers(prev => prev.map(x => x.id === u.id ? data : x))
       setEditing(null)
-      toast({ title: 'Usuario actualizado ✓', variant: 'success' })
+      toast({ title: t('admin.userUpdated'), variant: 'success' })
     }
   }
 
   const countryList = countries.map(c => c.code)
 
   if (loadingUsers) return (
-    <div className="py-10 text-center text-sm text-muted-foreground">Cargando usuarios…</div>
+    <div className="py-10 text-center text-sm text-muted-foreground">{t('admin.loadingUsers')}</div>
   )
   if (!users.length) return (
     <div className="py-10 text-center space-y-1">
-      <p className="text-sm text-gray-500 font-medium">No se encontraron usuarios</p>
-      <p className="text-xs text-gray-400">Verificá los permisos RLS de la tabla <code className="bg-gray-100 px-1 rounded">profiles</code> en Supabase.</p>
+      <p className="text-sm text-gray-500 font-medium">{t('admin.noUsers')}</p>
+      <p className="text-xs text-gray-400">{t('admin.noUsersHint')}</p>
     </div>
   )
 
@@ -169,7 +171,7 @@ function UsersPanel() {
               <div className="mt-3 pt-3 border-t flex gap-2 items-center">
                 <input
                   type="password"
-                  placeholder="Nueva contraseña"
+                  placeholder={t('admin.newPassword')}
                   value={resetPw.value}
                   onChange={e => setResetPw(r => ({ ...r, value: e.target.value }))}
                   className="flex-1 text-xs border rounded px-2 py-1 h-7"
@@ -335,6 +337,7 @@ function AuditPanel() {
 
 // ── Main Admin Page ─────────────────────────────────
 export default function AdminPage() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('users')
   const { role } = useAuth()
 
@@ -353,13 +356,13 @@ export default function AdminPage() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Sub-tabs */}
       <div className="flex gap-0.5 px-4 py-3 border-b bg-white flex-shrink-0 overflow-x-auto">
-        {ADMIN_TABS.map(t => (
+        {ADMIN_TABS.map(tab_ => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-3 py-1.5 text-xs rounded-md whitespace-nowrap transition-colors font-medium ${tab === t.id ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'}`}
+            key={tab_.id}
+            onClick={() => setTab(tab_.id)}
+            className={`px-3 py-1.5 text-xs rounded-md whitespace-nowrap transition-colors font-medium ${tab === tab_.id ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'}`}
           >
-            {t.label}
+            {t(`admin.tabs.${tab_.id}`)}
           </button>
         ))}
       </div>

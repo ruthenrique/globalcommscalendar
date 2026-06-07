@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts'
 import { SlidersHorizontal, X, TrendingUp, TrendingDown, Star, FileText, CheckCircle2, Minus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { COUNTRY_META, CHANNEL_META, STATUS_META, FORMAT_ICON } from '@/lib/constants'
@@ -57,6 +58,7 @@ function KPI({ label, value, sub, color, icon: Icon }) {
 
 // ── Insight card ──────────────────────────────────────────
 function Insight({ emoji, fact, label, color, trend }) {
+  const { t } = useTranslation()
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col gap-1 hover:shadow-sm transition-shadow">
       <div className="text-xl mb-0.5">{emoji}</div>
@@ -65,7 +67,7 @@ function Insight({ emoji, fact, label, color, trend }) {
       {trend !== undefined && (
         <div className={`flex items-center gap-1 text-[10px] font-semibold mt-0.5 ${trend > 0 ? 'text-emerald-500' : trend < 0 ? 'text-red-400' : 'text-gray-400'}`}>
           {trend > 0 ? <TrendingUp className="h-3 w-3" /> : trend < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-          {trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : 'Sin cambio'} vs mes anterior
+          {trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : t('dash.noChange')} {t('dash.vsPrev')}
         </div>
       )}
     </div>
@@ -74,6 +76,7 @@ function Insight({ emoji, fact, label, color, trend }) {
 
 // ── Activity heatmap ──────────────────────────────────────
 function ActivityHeatmap({ communications }) {
+  const { t } = useTranslation()
   const today = new Date()
   const WEEKS = 18
   const counts = {}
@@ -144,11 +147,11 @@ function ActivityHeatmap({ communications }) {
           ))}
         </div>
         <div className="flex items-center gap-1 mt-2 justify-end">
-          <span className="text-[9px] text-gray-300 mr-0.5">Menos</span>
+          <span className="text-[9px] text-gray-300 mr-0.5">{t('dash.less')}</span>
           {['#F1F5F9','#BAE6FD','#7DD3FC','#38BDF8','#0EA5E9'].map(c => (
             <div key={c} className="w-3 h-3 rounded-sm" style={{ background: c }} />
           ))}
-          <span className="text-[9px] text-gray-300 ml-0.5">Más</span>
+          <span className="text-[9px] text-gray-300 ml-0.5">{t('dash.more')}</span>
         </div>
       </div>
     </div>
@@ -157,14 +160,15 @@ function ActivityHeatmap({ communications }) {
 
 // ── Topic cloud ───────────────────────────────────────────
 function TopicCloud({ communications }) {
+  const { t } = useTranslation()
   const topics = useMemo(() => {
     const counts = {}
-    communications.forEach(c => arr(c.topico).forEach(t => { counts[t] = (counts[t] ?? 0) + 1 }))
+    communications.forEach(c => arr(c.topico).forEach(tp => { counts[tp] = (counts[tp] ?? 0) + 1 }))
     return Object.entries(counts).sort((a, b) => b[1] - a[1])
       .map(([name, count], i) => ({ name, count, color: PASTEL[i % PASTEL.length] }))
   }, [communications])
-  const max = Math.max(...topics.map(t => t.count), 1)
-  if (!topics.length) return <p className="text-xs text-gray-400 py-4 text-center">Sin datos</p>
+  const max = Math.max(...topics.map(tp => tp.count), 1)
+  if (!topics.length) return <p className="text-xs text-gray-400 py-4 text-center">{t('dash.noData')}</p>
   return (
     <div className="flex flex-wrap gap-2">
       {topics.map(({ name, count, color }) => {
@@ -183,13 +187,14 @@ function TopicCloud({ communications }) {
 
 // ── Format breakdown ──────────────────────────────────────
 function FormatBreakdown({ communications }) {
+  const { t } = useTranslation()
   const data = useMemo(() => {
     const counts = {}
     communications.forEach(c => arr(c.formato).forEach(f => { if (f) counts[f] = (counts[f] ?? 0) + 1 }))
     return Object.entries(counts).sort((a, b) => b[1] - a[1])
   }, [communications])
   const max = Math.max(...data.map(d => d[1]), 1)
-  if (!data.length) return <p className="text-xs text-gray-400 py-4 text-center">Sin datos</p>
+  if (!data.length) return <p className="text-xs text-gray-400 py-4 text-center">{t('dash.noData')}</p>
   return (
     <div className="space-y-2.5">
       {data.map(([fmt, count]) => (
@@ -253,6 +258,7 @@ function STitle({ children, sub }) {
 
 // ── Main Dashboard ────────────────────────────────────────
 export default function AdminGlobalPage() {
+  const { t } = useTranslation()
   const { communications, countries, channels } = useApp()
   const { role, myCountries } = useAuth()
 
@@ -450,11 +456,11 @@ export default function AdminGlobalPage() {
         {/* Expanded filter panel */}
         {filtersOpen && !isRestricted && (
           <div className="px-5 pb-3 pt-1 border-t border-gray-50 space-y-0.5">
-            <FilterRow label="País"    options={paiOptions}     value={filters.pais}    onChange={setF('pais')}    renderChip={p => `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`} />
-            <FilterRow label="Canal"   options={canalOptions}   value={filters.canal}   onChange={setF('canal')}   />
-            <FilterRow label="Estado"  options={estadoOptions}  value={filters.estado}  onChange={setF('estado')}  />
-            <FilterRow label="Formato" options={formatoOptions} value={filters.formato} onChange={setF('formato')} renderChip={f => `${FORMAT_ICON[f] ?? '📄'} ${f}`} />
-            <FilterRow label="Tópico"  options={topicoOptions}  value={filters.topico}  onChange={setF('topico')}  />
+            <FilterRow label={t('filter.country')} options={paiOptions}     value={filters.pais}    onChange={setF('pais')}    renderChip={p => `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`} />
+            <FilterRow label={t('filter.channel')} options={canalOptions}   value={filters.canal}   onChange={setF('canal')}   />
+            <FilterRow label={t('filter.status')}  options={estadoOptions}  value={filters.estado}  onChange={setF('estado')}  />
+            <FilterRow label={t('modal.formato')}  options={formatoOptions} value={filters.formato} onChange={setF('formato')} renderChip={f => `${FORMAT_ICON[f] ?? '📄'} ${f}`} />
+            <FilterRow label={t('filter.topic')}   options={topicoOptions}  value={filters.topico}  onChange={setF('topico')}  />
           </div>
         )}
       </div>
@@ -464,11 +470,11 @@ export default function AdminGlobalPage() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <KPI label="Total"      value={total}    color="#0EA5E9" icon={FileText}     sub={activeUserFilters > 0 || isRestricted ? `de ${allTotal}` : 'comunicaciones'} />
-          <KPI label="Aprobadas"  value={approved}  color="#10B981" icon={CheckCircle2} sub={total ? `${Math.round(approved / total * 100)}% del total` : '—'} />
-          <KPI label="Publicadas" value={published} color="#185FA5" icon={TrendingUp}   sub={total ? `${Math.round(published / total * 100)}% del total` : '—'} />
-          <KPI label="Destacadas" value={featured}  color="#F59E0B" icon={Star}         sub="contenido destacado" />
-          <KPI label="Borradores" value={drafts}    color="#94A3B8" icon={FileText}     sub={total ? `${Math.round(drafts / total * 100)}% del total` : '—'} />
+          <KPI label={t('dash.kpi.total')}     value={total}     color="#0EA5E9" icon={FileText}     sub={activeUserFilters > 0 || isRestricted ? `de ${allTotal}` : t('dash.kpi.comms')} />
+          <KPI label={t('dash.kpi.approved')}  value={approved}  color="#10B981" icon={CheckCircle2} sub={total ? `${Math.round(approved / total * 100)}${t('dash.kpi.ofTotal')}` : '—'} />
+          <KPI label={t('dash.kpi.published')} value={published} color="#185FA5" icon={TrendingUp}   sub={total ? `${Math.round(published / total * 100)}${t('dash.kpi.ofTotal')}` : '—'} />
+          <KPI label={t('dash.kpi.featured')}  value={featured}  color="#F59E0B" icon={Star}         sub={t('dash.kpi.featuredContent')} />
+          <KPI label={t('dash.kpi.drafts')}    value={drafts}    color="#94A3B8" icon={FileText}     sub={total ? `${Math.round(drafts / total * 100)}${t('dash.kpi.ofTotal')}` : '—'} />
         </div>
 
         {/* Insights cualitativos */}
@@ -476,23 +482,23 @@ export default function AdminGlobalPage() {
           <Insight
             emoji="📅"
             fact={DOW_NAMES[insights.bestDow] ?? '—'}
-            label="día más activo de la semana"
+            label={t('dash.insights.activeDay')}
           />
           <Insight
             emoji="🏆"
             fact={insights.topTopic ? `${insights.topTopic[0]} (${insights.topTopic[1]})` : '—'}
-            label={`tópico líder en ${MONTHS[new Date().getMonth()]}`}
+            label={t('dash.insights.topTopic', { month: MONTHS[new Date().getMonth()] })}
             trend={insights.trendPct}
           />
           <Insight
             emoji="📡"
             fact={insights.topCh ? `${insights.topCh[0]}` : '—'}
-            label={insights.topCh ? `concentra el ${insights.topChPct}% del contenido` : 'canal más usado'}
+            label={insights.topCh ? t('dash.insights.topChannelPct', { pct: insights.topChPct }) : t('dash.insights.topChannelFallback')}
           />
           <Insight
             emoji="✅"
             fact={`${insights.approvedRate}%`}
-            label="tasa de aprobación (aprobado + publicado)"
+            label={t('dash.insights.approvalRate')}
           />
           <Insight
             emoji="🌍"
@@ -510,7 +516,7 @@ export default function AdminGlobalPage() {
             <Insight
               emoji="⚠️"
               fact={`${insights.inactiveCount} ${insights.inactiveCount === 1 ? 'país' : 'países'}`}
-              label="sin comunicaciones en el período"
+              label={t('dash.insights.noComms')}
             />
           )}
           <Insight
@@ -524,7 +530,7 @@ export default function AdminGlobalPage() {
         {/* Tendencia + Canal donut */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle sub={`Año ${new Date().getFullYear()}`}>Tendencia mensual</STitle>
+            <STitle sub={t('dash.sections.trendSub', { year: new Date().getFullYear() })}>{t('dash.sections.trend')}</STitle>
             <ResponsiveContainer width="100%" height={150}>
               <AreaChart data={byMonth} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
                 <defs>
@@ -542,7 +548,7 @@ export default function AdminGlobalPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle>Mix de canales</STitle>
+            <STitle>{t('dash.sections.channelMix')}</STitle>
             <div className="flex flex-col items-center gap-2">
               <PieChart width={110} height={110}>
                 <Pie data={channelData} dataKey="value" cx={50} cy={50} innerRadius={24} outerRadius={48} strokeWidth={0}>
@@ -565,18 +571,18 @@ export default function AdminGlobalPage() {
 
         {/* Heatmap */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <STitle sub="Frecuencia de publicación — últimas 18 semanas">Actividad</STitle>
+          <STitle sub={t('dash.sections.activitySub')}>{t('dash.sections.activity')}</STitle>
           <ActivityHeatmap communications={filtered} />
         </div>
 
         {/* Tópicos + Formatos */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle sub="Distribución por tema">Tópicos</STitle>
+            <STitle sub={t('dash.sections.topicsSub')}>{t('dash.sections.topics')}</STitle>
             <TopicCloud communications={filtered} />
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle sub="Tipo de piezas">Formatos</STitle>
+            <STitle sub={t('dash.sections.formatsSub')}>{t('dash.sections.formats')}</STitle>
             <FormatBreakdown communications={filtered} />
           </div>
         </div>
@@ -584,11 +590,11 @@ export default function AdminGlobalPage() {
         {/* Estado funnel + Por país */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle sub="Pipeline de aprobación">Estado</STitle>
+            <STitle sub={t('dash.sections.statusSub')}>{t('dash.sections.status')}</STitle>
             <StatusFunnel communications={filtered} />
           </div>
           <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-4">
-            <STitle sub="Volumen por unidad">Por país</STitle>
+            <STitle sub={t('dash.sections.byCountrySub')}>{t('dash.sections.byCountry')}</STitle>
             <div className="space-y-2.5">
               {countryData.map(c => {
                 const color = c.color ?? COUNTRY_META[c.code]?.color ?? '#888'
@@ -604,14 +610,14 @@ export default function AdminGlobalPage() {
                   </div>
                 )
               })}
-              {!countryData.length && <p className="text-xs text-gray-400 text-center py-4">Sin datos</p>}
+              {!countryData.length && <p className="text-xs text-gray-400 text-center py-4">{t('dash.noData')}</p>}
             </div>
           </div>
         </div>
 
         {/* Matriz país × canal */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <STitle sub="Combinación de alcance y canal">Matriz país × canal</STitle>
+          <STitle sub={t('dash.sections.matrixSub')}>{t('dash.sections.matrix')}</STitle>
           <div className="overflow-x-auto">
             <table className="text-xs border-collapse w-full">
               <thead>
