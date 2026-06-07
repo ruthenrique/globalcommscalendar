@@ -162,7 +162,7 @@ export default function CommModal({ open, onClose, initial = null }) {
   }
 
   async function handleDelete() {
-    if (!confirm('¿Eliminar esta comunicación?')) return
+    if (!confirm(t('modal.deleteConfirm'))) return
     const { error } = await deleteComm(initial.id)
     if (error) toast({ title: t('toast.deleteError'), variant: 'destructive' })
     else { toast({ title: t('toast.deleted'), variant: 'success' }); onClose() }

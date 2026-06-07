@@ -13,11 +13,39 @@
     "signOut":  "Sair"
   },
   "calendar": {
-    "internalChannels": "Canais Internos",
-    "externalChannels": "Canais Externos",
-    "today": "Hoje",
-    "new":   "Nova",
-    "comms": "comms"
+    "internalChannels":  "Canais Internos",
+    "externalChannels":  "Canais Externos",
+    "today":             "Hoje",
+    "new":               "Nova",
+    "comms":             "comms",
+    "filterBtn":         "Filtrar",
+    "noResults":         "Sem resultados",
+    "noComms":           "Sem comunicações",
+    "newComm":           "Nova comunicação",
+    "saturation":        "Saturação:",
+    "searchPlaceholder": "Buscar comms, tópico, canal...",
+    "moreResults":       "+{{n}} mais — refine a busca",
+    "moreShort":         "+{{n}} mais",
+    "showingResults":    "Mostrando {{count}} resultado(s) para «{{search}}» esta semana"
+  },
+  "notif": {
+    "title":      "Notificações",
+    "overdue":    "Vencidas sem publicar",
+    "tomorrow":   "Amanhã em Rascunho",
+    "today":      "Agendadas hoje",
+    "review":     "Pendentes de aprovação",
+    "empty":      "Tudo em dia",
+    "emptyDesc":  "Sem alertas pendentes",
+    "goCalendar": "Ver no calendário →",
+    "openEdit":   "Abrir e editar"
+  },
+  "brief": {
+    "todayLabel": "HOJE",
+    "noChannel":  "Sem canal",
+    "noComms":    "Sem comunicações",
+    "weekCount":  "{{count}} comms esta semana",
+    "empty":      "Sem comms nos próximos 14 dias",
+    "emptyDesc":  "Aproveite o silêncio ou planeje algo novo"
   },
   "filter": {
     "country":  "País",
@@ -58,7 +86,8 @@
     "delete":           "Excluir",
     "created":          "Criado",
     "modified":         "Modificado",
-    "selectPlaceholder":"Selecionar..."
+    "selectPlaceholder":"Selecionar...",
+    "deleteConfirm":    "Excluir esta comunicação?"
   },
   "toast": {
     "moved":         "Comunicação movida ✓",

@@ -211,6 +211,7 @@ const INT_SET = new Set(INTERNAL_CHANNELS)
 const EXT_SET = new Set(EXTERNAL_CHANNELS)
 
 function CountryAlert({ comms, dateStrs }) {
+  const { t } = useTranslation()
   const intCounts = {}, extCounts = {}
   comms.filter(ev => dateStrs.includes(ev.date)).forEach(ev => {
     const channels = arr(ev.canal)
@@ -236,7 +237,7 @@ function CountryAlert({ comms, dateStrs }) {
   return (
     <div className="flex items-center gap-2 px-4 py-1 flex-shrink-0 flex-wrap border-b border-gray-100">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-      <span className="text-[10px] text-gray-400">Saturación:</span>
+      <span className="text-[10px] text-gray-400">{t('calendar.saturation')}</span>
       {alerts.map(({ key, label, day, n, type }) => (
         <span key={key} className="text-[10px] text-gray-500">
           {label} <span className="text-gray-400">{day}</span>
@@ -312,7 +313,7 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
                   {evs.slice(0, 3).map(ev => (
                     <MiniCard key={ev.id} ev={ev} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} />
                   ))}
-                  {evs.length > 3 && <div className="text-[9px] text-gray-400 font-medium pl-1 mt-0.5">+{evs.length - 3} más</div>}
+                  {evs.length > 3 && <div className="text-[9px] text-gray-400 font-medium pl-1 mt-0.5">{t('calendar.moreShort', { n: evs.length - 3 })}</div>}
                 </div>
               )
             })}
@@ -372,9 +373,10 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
 
 // ── Search results overlay ────────────────────────────────
 function SearchResults({ results, onSelect, onClose, isMobile }) {
+  const { t } = useTranslation()
   if (!results.length) return (
     <div className={cn('absolute z-50 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden', isMobile ? 'left-0 right-0 top-full mt-1' : 'left-0 right-0 top-full mt-1')}>
-      <div className="px-4 py-3 text-xs text-gray-400 text-center">Sin resultados</div>
+      <div className="px-4 py-3 text-xs text-gray-400 text-center">{t('calendar.noResults')}</div>
     </div>
   )
   return (
@@ -421,7 +423,7 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
       </div>
       {results.length > 20 && (
         <div className="px-4 py-2 text-[10px] text-gray-400 border-t border-gray-50 text-center">
-          {results.length - 20} más — acotar la búsqueda
+          {t('calendar.moreResults', { n: results.length - 20 })}
         </div>
       )}
     </div>
@@ -443,10 +445,10 @@ function DayView({ comms, dayStr, today, onEventClick, canEdit, onAdd, statusT }
       {dayComms.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
           <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
-          <p className="text-sm font-medium text-gray-500">Sin comunicaciones</p>
+          <p className="text-sm font-medium text-gray-500">{t('calendar.noComms')}</p>
           {canEdit && (
             <button onClick={() => onAdd(dayStr)} className="mt-3 text-xs text-sky-600 hover:underline flex items-center gap-1">
-              <Plus className="h-3.5 w-3.5" /> Nueva comunicación
+              <Plus className="h-3.5 w-3.5" /> {t('calendar.newComm')}
             </button>
           )}
         </div>
@@ -804,7 +806,7 @@ export default function CalendarPage() {
               onChange={e => { setSearch(e.target.value); setSearchOpen(e.target.value.length > 0) }}
               onFocus={() => search.length > 0 && setSearchOpen(true)}
               onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
-              placeholder="Buscar comms, tópico, canal..."
+              placeholder={t('calendar.searchPlaceholder')}
               className="w-full pl-8 pr-7 h-8 text-xs border border-gray-200 rounded-full bg-gray-50 focus:bg-white focus:border-sky-300 focus:ring-1 focus:ring-sky-200 outline-none transition-all"
             />
             {search && (
@@ -841,7 +843,7 @@ export default function CalendarPage() {
             )}
           >
             <SlidersHorizontal className="h-3 w-3" />
-            {!isMobile && <span>Filtrar</span>}
+            {!isMobile && <span>{t('calendar.filterBtn')}</span>}
             {activeFilters > 0 && (
               <span className="bg-sky-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFilters}</span>
             )}
@@ -866,7 +868,7 @@ export default function CalendarPage() {
 
           {hasAnyFilter && (
             <button onClick={clearAll} className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 flex-shrink-0 ml-auto">
-              <X className="h-2.5 w-2.5" /> Limpiar
+              <X className="h-2.5 w-2.5" /> {t('filter.clear')}
             </button>
           )}
         </div>
@@ -950,7 +952,7 @@ export default function CalendarPage() {
             {/* Search highlight banner */}
             {search.trim() && (
               <div className="px-4 py-2 text-xs text-sky-600 bg-sky-50 border-t border-sky-100">
-                Mostrando {weekFiltered.length} resultado{weekFiltered.length !== 1 ? 's' : ''} para <strong>"{search}"</strong> esta semana
+                {t('calendar.showingResults', { count: weekFiltered.length, search })}
               </div>
             )}
 

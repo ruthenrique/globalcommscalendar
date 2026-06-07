@@ -13,11 +13,39 @@
     "signOut":  "Sign out"
   },
   "calendar": {
-    "internalChannels": "Internal Channels",
-    "externalChannels": "External Channels",
-    "today": "Today",
-    "new":   "New",
-    "comms": "comms"
+    "internalChannels":  "Internal Channels",
+    "externalChannels":  "External Channels",
+    "today":             "Today",
+    "new":               "New",
+    "comms":             "comms",
+    "filterBtn":         "Filter",
+    "noResults":         "No results",
+    "noComms":           "No communications",
+    "newComm":           "New communication",
+    "saturation":        "Saturation:",
+    "searchPlaceholder": "Search comms, topic, channel...",
+    "moreResults":       "+{{n}} more — narrow your search",
+    "moreShort":         "+{{n}} more",
+    "showingResults":    "Showing {{count}} result(s) for «{{search}}» this week"
+  },
+  "notif": {
+    "title":      "Notifications",
+    "overdue":    "Overdue unpublished",
+    "tomorrow":   "Tomorrow in Draft",
+    "today":      "Scheduled today",
+    "review":     "Pending approval",
+    "empty":      "All caught up",
+    "emptyDesc":  "No pending alerts",
+    "goCalendar": "View in calendar →",
+    "openEdit":   "Open and edit"
+  },
+  "brief": {
+    "todayLabel": "TODAY",
+    "noChannel":  "No channel",
+    "noComms":    "No communications",
+    "weekCount":  "{{count}} comms this week",
+    "empty":      "No comms in the next 14 days",
+    "emptyDesc":  "Enjoy the silence or plan something new"
   },
   "filter": {
     "country":  "Country",
@@ -58,7 +86,8 @@
     "delete":           "Delete",
     "created":          "Created",
     "modified":         "Modified",
-    "selectPlaceholder":"Select..."
+    "selectPlaceholder":"Select...",
+    "deleteConfirm":    "Delete this communication?"
   },
   "toast": {
     "moved":         "Communication moved ✓",

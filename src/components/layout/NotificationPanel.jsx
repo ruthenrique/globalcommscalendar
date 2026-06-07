@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef, useState, useCallback } from 'react'
 import { Bell, X, ChevronRight, Pencil, CalendarDays } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr, cn } from '@/lib/utils'
@@ -37,33 +38,29 @@ function useNotifications() {
       .filter(c => c.date < today && !['Publicado','Cancelado'].includes(arr(c.estado)[0]))
       .sort((a, b) => b.date.localeCompare(a.date))
     if (overdue.length) groups.push({
-      id: 'overdue', icon: '⏰', label: 'Vencidas sin publicar',
+      id: 'overdue', labelKey: 'notif.overdue', icon: '⏰',
       color: 'text-red-600', badgeBg: 'bg-red-500', rowBg: 'hover:bg-red-50',
-      accentBg: 'bg-red-50', accentBorder: 'border-red-100',
       count: overdue.length, comms: overdue,
     })
 
     const tomorrowDraft = mine.filter(c => c.date === tomorrow && arr(c.estado)[0] === 'Borrador')
     if (tomorrowDraft.length) groups.push({
-      id: 'tomorrow', icon: '⚠️', label: 'Mañana en Borrador',
+      id: 'tomorrow', labelKey: 'notif.tomorrow', icon: '⚠️',
       color: 'text-amber-600', badgeBg: 'bg-amber-500', rowBg: 'hover:bg-amber-50',
-      accentBg: 'bg-amber-50', accentBorder: 'border-amber-100',
       count: tomorrowDraft.length, comms: tomorrowDraft,
     })
 
     const todayComms = mine.filter(c => c.date === today && arr(c.estado)[0] !== 'Cancelado')
     if (todayComms.length) groups.push({
-      id: 'today', icon: '📅', label: 'Planificadas hoy',
+      id: 'today', labelKey: 'notif.today', icon: '📅',
       color: 'text-sky-600', badgeBg: 'bg-sky-500', rowBg: 'hover:bg-sky-50',
-      accentBg: 'bg-sky-50', accentBorder: 'border-sky-100',
       count: todayComms.length, comms: todayComms,
     })
 
     const review = mine.filter(c => arr(c.estado)[0] === 'En revisión')
     if (review.length) groups.push({
-      id: 'review', icon: '📋', label: 'Pendientes de aprobación',
+      id: 'review', labelKey: 'notif.review', icon: '📋',
       color: 'text-purple-600', badgeBg: 'bg-purple-500', rowBg: 'hover:bg-purple-50',
-      accentBg: 'bg-purple-50', accentBorder: 'border-purple-100',
       count: review.length, comms: review,
     })
 
@@ -73,6 +70,7 @@ function useNotifications() {
 
 // ── Hover Preview Card ────────────────────────────────────
 function CommPreview({ comm, top, onEdit }) {
+  const { t } = useTranslation()
   const paises  = arr(comm.pais)
   const canales = arr(comm.canal)
   const estado  = arr(comm.estado)[0]
@@ -155,7 +153,7 @@ function CommPreview({ comm, top, onEdit }) {
           className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-gray-900 hover:bg-gray-700 rounded-xl py-2 transition-colors"
         >
           <Pencil className="h-3 w-3" />
-          Abrir y editar
+          {t('notif.openEdit')}
         </button>
       </div>
     </div>
@@ -191,6 +189,7 @@ function CommRow({ c, rowBg, onHover, onLeave }) {
 
 // ── Notification group ────────────────────────────────────
 function NotifGroup({ group, onHover, onLeave }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(true)
   const visible = group.comms.slice(0, 6)
   const extra   = group.comms.length - visible.length
@@ -202,7 +201,7 @@ function NotifGroup({ group, onHover, onLeave }) {
         className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-gray-50 transition-colors"
       >
         <span className="text-base leading-none">{group.icon}</span>
-        <span className={cn('text-xs font-semibold flex-1 text-left', group.color)}>{group.label}</span>
+        <span className={cn('text-xs font-semibold flex-1 text-left', group.color)}>{t(group.labelKey)}</span>
         <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white min-w-[20px] text-center', group.badgeBg)}>
           {group.count}
         </span>
@@ -237,6 +236,7 @@ export function NotifBadge() {
 
 // ── Main panel ────────────────────────────────────────────
 export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
+  const { t }    = useTranslation()
   const groups   = useNotifications()
   const total    = groups.reduce((n, g) => n + g.count, 0)
   const panelRef = useRef(null)
@@ -317,7 +317,7 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-gray-700" />
-                <span className="text-sm font-bold text-gray-900 tracking-tight">Notificaciones</span>
+                <span className="text-sm font-bold text-gray-900 tracking-tight">{t('notif.title')}</span>
                 {total > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none">
                     {total}
@@ -338,8 +338,8 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
                   <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
                     <Bell className="h-6 w-6 text-gray-200" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-500">Todo al día</p>
-                  <p className="text-xs text-gray-300 mt-1">Sin alertas pendientes</p>
+                  <p className="text-sm font-semibold text-gray-500">{t('notif.empty')}</p>
+                  <p className="text-xs text-gray-300 mt-1">{t('notif.emptyDesc')}</p>
                 </div>
               ) : (
                 groups.map(g => (
@@ -354,7 +354,7 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
                   onClick={() => { setPreview(null); onGoToCalendar(); onClose() }}
                   className="w-full text-xs text-sky-600 hover:text-sky-700 font-semibold text-center py-1.5 rounded-lg hover:bg-sky-50 transition-colors"
                 >
-                  Ver en calendario →
+                  {t('notif.goCalendar')}
                 </button>
               </div>
             )}

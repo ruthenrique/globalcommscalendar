@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr } from '@/lib/utils'
@@ -56,15 +57,16 @@ function CommCard({ c, onOpen }) {
 }
 
 function DayBlock({ ds, comms, isToday, onOpen }) {
+  const { t } = useTranslation()
   const d = new Date(ds + 'T00:00:00')
   const label = isToday
-    ? `HOY — ${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
+    ? `${t('brief.todayLabel')} — ${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
     : `${DAYS_ES[d.getDay()]} ${d.getDate()} de ${MONTHS_ES[d.getMonth()]}`
 
   // group by canal
   const byCanal = {}
   comms.forEach(c => {
-    const ch = arr(c.canal)[0] ?? 'Sin canal'
+    const ch = arr(c.canal)[0] ?? t('brief.noChannel')
     if (!byCanal[ch]) byCanal[ch] = []
     byCanal[ch].push(c)
   })
@@ -82,7 +84,7 @@ function DayBlock({ ds, comms, isToday, onOpen }) {
       </div>
 
       {comms.length === 0 ? (
-        <p className="text-sm text-gray-300 px-4 py-2">Sin comunicaciones</p>
+        <p className="text-sm text-gray-300 px-4 py-2">{t('brief.noComms')}</p>
       ) : (
         <div className="space-y-2">
           {Object.entries(byCanal).map(([canal, evs]) => (
@@ -103,6 +105,7 @@ function DayBlock({ ds, comms, isToday, onOpen }) {
 }
 
 export default function BriefingPage() {
+  const { t } = useTranslation()
   const { communications } = useApp()
   const { role, myCountries } = useAuth()
   const [editComm, setEditComm] = useState(null)
@@ -140,7 +143,7 @@ export default function BriefingPage() {
             <p className="text-sm text-gray-400">
               {DAYS_ES[todayDate.getDay()]}, {todayDate.getDate()} de {MONTHS_ES[todayDate.getMonth()]} {todayDate.getFullYear()}
               <span className="ml-3 text-gray-300">·</span>
-              <span className="ml-3 text-sky-600 font-medium">{totalThisWeek} comms esta semana</span>
+              <span className="ml-3 text-sky-600 font-medium">{t('brief.weekCount', { count: totalThisWeek })}</span>
             </p>
           </div>
         </div>
@@ -157,8 +160,8 @@ export default function BriefingPage() {
           {days.every(d => d.comms.length === 0) && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <span className="text-5xl mb-4">🎉</span>
-              <p className="text-lg font-bold text-gray-700">Sin comms los próximos 14 días</p>
-              <p className="text-sm text-gray-400 mt-1">Disfrutá el silencio o planificá algo nuevo</p>
+              <p className="text-lg font-bold text-gray-700">{t('brief.empty')}</p>
+              <p className="text-sm text-gray-400 mt-1">{t('brief.emptyDesc')}</p>
             </div>
           )}
         </div>
