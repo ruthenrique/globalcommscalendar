@@ -87,14 +87,14 @@ export function AppProvider({ children }) {
 
   async function writeAudit(table, recordId, action, oldData, newData) {
     if (!user) return
-    await supabase.from('audit_log').insert({
-      table_name: table,
-      record_id: String(recordId),
-      action,
-      old_data: oldData,
-      new_data: newData,
-      user_id: user.id,
-      user_name: profile?.name ?? user.email,
+    // Usamos RPC con SECURITY DEFINER — user_id/user_name los resuelve el servidor
+    // desde auth.uid() y profiles, el cliente no puede falsificarlos
+    await supabase.rpc('log_audit', {
+      p_table_name: table,
+      p_record_id:  String(recordId),
+      p_action:     action,
+      p_old_data:   oldData ?? null,
+      p_new_data:   newData ?? null,
     })
   }
 
