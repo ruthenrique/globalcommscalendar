@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/layout/Toaster'
 import CommModal from '@/components/CommModal'
 import { arr, formatDate, cn } from '@/lib/utils'
-import { COUNTRY_META, STATUS_META, FORMAT_ICON, CHANNEL_META } from '@/lib/constants'
+import { STATUS_META, FORMAT_ICON } from '@/lib/constants'
 
 // ── Status badge ──────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -25,11 +25,12 @@ function StatusBadge({ status }) {
 }
 
 function CountryFlags({ pais }) {
+  const { countryMeta } = useApp()
   return (
     <span className="flex flex-wrap gap-0.5">
       {arr(pais).map(p => (
-        <span key={p} title={COUNTRY_META[p]?.name ?? p} className="text-sm">
-          {COUNTRY_META[p]?.flag ?? p}
+        <span key={p} title={countryMeta[p]?.name ?? p} className="text-sm">
+          {countryMeta[p]?.flag ?? p}
         </span>
       ))}
     </span>
@@ -276,7 +277,7 @@ function ImportModal({ open, onClose, onImport }) {
 // ── Main page ─────────────────────────────────────────────
 export default function DataMasterPage() {
   const { t } = useTranslation()
-  const { communications, deleteComm, createComm } = useApp()
+  const { communications, deleteComm, createComm, countryMeta, channelMeta } = useApp()
   const { perms, canEditCountry, role, myCountries } = useAuth()
 
   const [search,      setSearch]      = useState('')
@@ -385,7 +386,7 @@ export default function DataMasterPage() {
           {t('dm.records', { count: filtered.length })}{filtered.length !== visibleComms.length ? ` / ${visibleComms.length}` : ''}
           {!isSuperAdmin && myCountries.length > 0 && (
             <span className="ml-1 text-sky-600 font-medium">
-              · {myCountries.map(c => COUNTRY_META[c]?.flag ?? c).join(' ')} + 🌍 GL
+              · {myCountries.map(c => countryMeta[c]?.flag ?? c).join(' ')} + 🌍 GL
             </span>
           )}
         </span>
@@ -469,7 +470,7 @@ export default function DataMasterPage() {
                   <td className="px-2 py-1.5">
                     <div className="flex flex-wrap gap-0.5">
                       {canales.map(ch => {
-                        const color = CHANNEL_META[ch]?.color ?? '#94A3B8'
+                        const color = channelMeta[ch]?.color ?? '#94A3B8'
                         return (
                           <span key={ch} className="text-[10px] px-1.5 py-0.5 rounded font-medium"
                             style={{ background: color + '18', color }}>

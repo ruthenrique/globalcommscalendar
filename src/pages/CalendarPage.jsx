@@ -7,10 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/components/layout/Toaster'
 import CommModal from '@/components/CommModal'
 import { dateStr, todayStr, arr, intersects, cn } from '@/lib/utils'
-import {
-  COUNTRY_META, CHANNEL_META, STATUS_META, FORMAT_ICON,
-  INTERNAL_CHANNELS, EXTERNAL_CHANNELS,
-} from '@/lib/constants'
+import { STATUS_META, FORMAT_ICON } from '@/lib/constants'
 
 // ── i18n ──────────────────────────────────────────────────
 const DOW_ES    = ['Do','Lu','Ma','Mi','Ju','Vi','Sá']
@@ -116,12 +113,12 @@ function FilterRow({ label, options, value, onChange, renderChip }) {
 }
 
 // ── Event card (week, full) ───────────────────────────────
-function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
+function EventCard({ ev, status_t, onClick, onDragStart, compact, channelMeta = {}, countryMeta = {} }) {
   const paises   = arr(ev.pais)
   const canal    = arr(ev.canal)[0]
   const status   = arr(ev.estado)[0]
   const formato  = arr(ev.formato)[0]
-  const chanMeta = CHANNEL_META[canal] ?? {}
+  const chanMeta = channelMeta[canal] ?? {}
   const stMeta   = STATUS_META[status] ?? {}
 
   if (compact) {
@@ -133,7 +130,7 @@ function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
         style={{ background: stMeta.bg ?? '#f5f5f7', borderLeft: `2px solid ${chanMeta.color ?? '#d1d5db'}`, opacity: status === 'Cancelado' ? 0.45 : 1 }}
       >
         <div className="flex items-center gap-0.5 mb-0.5">
-          {paises.slice(0, 2).map(p => <span key={p} className="text-[10px] leading-none">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+          {paises.slice(0, 2).map(p => <span key={p} className="text-[10px] leading-none">{countryMeta[p]?.flag ?? ''}</span>)}
           {ev.destacado && <span className="text-amber-400 text-[8px] ml-auto">★</span>}
         </div>
         <div className="text-[10px] font-semibold leading-snug line-clamp-2" style={{ color: stMeta.color ?? '#1a1a1a' }}>
@@ -160,7 +157,7 @@ function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
     >
       <div className="flex items-center gap-0.5 mb-1">
         <div className="flex items-center">
-          {paises.slice(0, 4).map(p => <span key={p} className="text-[11px] leading-none -mr-0.5">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+          {paises.slice(0, 4).map(p => <span key={p} className="text-[11px] leading-none -mr-0.5">{countryMeta[p]?.flag ?? ''}</span>)}
           {paises.length > 4 && <span className="text-[8px] opacity-50 ml-1">+{paises.length - 4}</span>}
         </div>
         {ev.destacado && <span className="text-amber-400 text-[9px] ml-0.5">★</span>}
@@ -184,11 +181,11 @@ function EventCard({ ev, status_t, onClick, onDragStart, compact }) {
 }
 
 // ── Mini card (month view) ────────────────────────────────
-function MiniCard({ ev, onClick, onDragStart }) {
+function MiniCard({ ev, onClick, onDragStart, countryMeta = {}, channelMeta = {} }) {
   const country  = arr(ev.pais)[0]
   const canal    = arr(ev.canal)[0]
   const status   = arr(ev.estado)[0]
-  const chanMeta = CHANNEL_META[canal] ?? {}
+  const chanMeta = channelMeta[canal] ?? {}
   const stMeta   = STATUS_META[status] ?? {}
   return (
     <div
@@ -199,7 +196,7 @@ function MiniCard({ ev, onClick, onDragStart }) {
       className="text-[10px] font-medium px-1.5 py-0.5 rounded cursor-pointer flex items-center gap-1 mb-0.5 overflow-hidden"
       style={{ background: stMeta.bg ?? '#f5f5f7', color: stMeta.color ?? '#1a1a1a', borderLeft: `2px solid ${chanMeta.color ?? '#d1d5db'}`, opacity: status === 'Cancelado' ? 0.6 : 1 }}
     >
-      <span className="flex-shrink-0 leading-none">{COUNTRY_META[country]?.flag ?? ''}</span>
+      <span className="flex-shrink-0 leading-none">{countryMeta[country]?.flag ?? ''}</span>
       <span className="truncate flex-1">{ev.titulo}</span>
       {ev.destacado && <span className="text-amber-400 flex-shrink-0 text-[9px]">★</span>}
     </div>
@@ -207,16 +204,13 @@ function MiniCard({ ev, onClick, onDragStart }) {
 }
 
 // ── Country overload alert ────────────────────────────────
-const INT_SET = new Set(INTERNAL_CHANNELS)
-const EXT_SET = new Set(EXTERNAL_CHANNELS)
-
-function CountryAlert({ comms, dateStrs }) {
+function CountryAlert({ comms, dateStrs, countryMeta = {}, intSet, extSet }) {
   const { t } = useTranslation()
   const intCounts = {}, extCounts = {}
   comms.filter(ev => dateStrs.includes(ev.date)).forEach(ev => {
     const channels = arr(ev.canal)
-    const hasInt = channels.some(c => INT_SET.has(c))
-    const hasExt = channels.some(c => EXT_SET.has(c))
+    const hasInt = intSet ? channels.some(c => intSet.has(c)) : false
+    const hasExt = extSet ? channels.some(c => extSet.has(c)) : false
     arr(ev.pais).forEach(p => {
       const key = `${p}||${ev.date}`
       if (hasInt) intCounts[key] = (intCounts[key] ?? 0) + 1
@@ -228,7 +222,7 @@ function CountryAlert({ comms, dateStrs }) {
   allKeys.forEach(key => {
     const [p, date] = key.split('||')
     const [, m, d] = date.split('-')
-    const label = `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`
+    const label = `${countryMeta[p]?.flag ?? ''} ${countryMeta[p]?.name ?? p}`
     const day = `${d}/${m}`
     if ((intCounts[key] ?? 0) > 3) alerts.push({ key: `${key}|int`, label, day, n: intCounts[key], type: 'int' })
     if ((extCounts[key] ?? 0) > 3) alerts.push({ key: `${key}|ext`, label, day, n: extCounts[key], type: 'ext' })
@@ -249,7 +243,7 @@ function CountryAlert({ comms, dateStrs }) {
 }
 
 // ── Month view ────────────────────────────────────────────
-function MonthView({ year, month, communications, filters, today, lang, canEdit, onClickCard, onAdd, onDragStart, onDrop, isMobile }) {
+function MonthView({ year, month, communications, filters, today, lang, canEdit, onClickCard, onAdd, onDragStart, onDrop, isMobile, countryMeta = {}, channelMeta = {} }) {
   const { t } = useTranslation()
   const [dragOver, setDragOver] = useState(null)
   const dowLabels = getMonFirstLabels(lang)
@@ -350,7 +344,7 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
           ) : (
             <div className="space-y-2">
               {mobileDayEvs.map(ev => (
-                <EventCard key={ev.id} ev={ev} compact={false} status_t={arr(ev.estado)[0] ?? ''} onClick={() => onClickCard(ev)} onDragStart={() => {}} />
+                <EventCard key={ev.id} ev={ev} compact={false} status_t={arr(ev.estado)[0] ?? ''} onClick={() => onClickCard(ev)} onDragStart={() => {}} channelMeta={channelMeta} countryMeta={countryMeta} />
               ))}
             </div>
           )}
@@ -399,7 +393,7 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
                     {d.getDate()}
                   </div>
                   {evs.slice(0, 3).map(ev => (
-                    <MiniCard key={ev.id} ev={ev} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} />
+                    <MiniCard key={ev.id} ev={ev} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} countryMeta={countryMeta} channelMeta={channelMeta} />
                   ))}
                   {evs.length > 3 && <div className="text-[9px] text-gray-400 font-medium pl-1 mt-0.5">{t('calendar.moreShort', { n: evs.length - 3 })}</div>}
                 </div>
@@ -413,8 +407,8 @@ function MonthView({ year, month, communications, filters, today, lang, canEdit,
 }
 
 // ── Week channel row ──────────────────────────────────────
-function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry, onClickCard, onAdd, onDragStart, onDrop, statusT, compact }) {
-  const chanMeta = CHANNEL_META[channel] ?? {}
+function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry, onClickCard, onAdd, onDragStart, onDrop, statusT, compact, channelMeta = {}, countryMeta = {} }) {
+  const chanMeta = channelMeta[channel] ?? {}
   const [dragOver, setDragOver] = useState(null)
   return (
     <tr className="group">
@@ -443,7 +437,7 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
             {!isWE && (
               <>
                 {evs.map(ev => (
-                  <EventCard key={ev.id} ev={ev} compact={compact} status_t={statusT(arr(ev.estado)[0])} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} />
+                  <EventCard key={ev.id} ev={ev} compact={compact} status_t={statusT(arr(ev.estado)[0])} onClick={() => onClickCard(ev)} onDragStart={() => onDragStart(ev.id)} channelMeta={channelMeta} countryMeta={countryMeta} />
                 ))}
                 {canEdit && (
                   <button onClick={() => onAdd(channel, ds)} className={cn('w-full flex items-center justify-center rounded-lg border border-dashed border-gray-200 text-gray-300 hover:border-sky-300 hover:text-sky-400 transition-colors mt-0.5 opacity-0 group-hover:opacity-100', compact ? 'h-4' : 'h-5')}>
@@ -460,7 +454,7 @@ function WeekChannelRow({ channel, days, today, byDate, canEdit, canEditCountry,
 }
 
 // ── Search results overlay ────────────────────────────────
-function SearchResults({ results, onSelect, onClose, isMobile }) {
+function SearchResults({ results, onSelect, onClose, isMobile, countryMeta = {}, channelMeta = {} }) {
   const { t } = useTranslation()
   if (!results.length) return (
     <div className={cn('absolute z-50 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden', isMobile ? 'left-0 right-0 top-full mt-1' : 'left-0 right-0 top-full mt-1')}>
@@ -474,7 +468,7 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
           const canal   = arr(ev.canal)[0]
           const status  = arr(ev.estado)[0]
           const stMeta  = STATUS_META[status] ?? {}
-          const chMeta  = CHANNEL_META[canal] ?? {}
+          const chMeta  = channelMeta[canal] ?? {}
           return (
             <button
               key={ev.id}
@@ -482,7 +476,7 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
               className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"
             >
               <div className="flex-shrink-0 mt-0.5">
-                {arr(ev.pais).slice(0, 2).map(p => <span key={p} className="text-sm">{COUNTRY_META[p]?.flag ?? ''}</span>)}
+                {arr(ev.pais).slice(0, 2).map(p => <span key={p} className="text-sm">{countryMeta[p]?.flag ?? ''}</span>)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold text-gray-800 truncate">
@@ -520,7 +514,7 @@ function SearchResults({ results, onSelect, onClose, isMobile }) {
 
 // ── Main CalendarPage ─────────────────────────────────────
 // ── Day view ──────────────────────────────────────────────
-function DayView({ comms, dayStr, today, onEventClick, canEdit, onAdd, statusT }) {
+function DayView({ comms, dayStr, today, onEventClick, canEdit, onAdd, statusT, channelMeta = {} }) {
   const dayComms = comms.filter(c => c.date === dayStr)
   const groups   = {}
   dayComms.forEach(ev => {
@@ -543,7 +537,7 @@ function DayView({ comms, dayStr, today, onEventClick, canEdit, onAdd, statusT }
       ) : (
         <div className="space-y-5 max-w-2xl mx-auto">
           {Object.entries(groups).map(([canal, evs]) => {
-            const chanMeta = CHANNEL_META[canal] ?? {}
+            const chanMeta = channelMeta[canal] ?? {}
             return (
               <div key={canal}>
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-100">
@@ -612,7 +606,7 @@ function MiniMonthPicker({ initYear, initMonth, today, commsPerDay, lang, onSele
 }
 
 export default function CalendarPage() {
-  const { communications, channels, updateComm } = useApp()
+  const { communications, channels, updateComm, countryMeta, channelMeta, internalChannels, externalChannels, appLists } = useApp()
   const { perms, canEditCountry, role, myCountries } = useAuth()
   const { t, i18n }                             = useTranslation()
   const isMobile                                 = useIsMobile()
@@ -657,7 +651,7 @@ export default function CalendarPage() {
       c.body?.toLowerCase().includes(q) ||
       arr(c.topico).some(t => t.toLowerCase().includes(q)) ||
       arr(c.canal).some(ch => ch.toLowerCase().includes(q)) ||
-      arr(c.pais).some(p => (COUNTRY_META[p]?.name ?? p).toLowerCase().includes(q)) ||
+      arr(c.pais).some(p => (countryMeta[p]?.name ?? p).toLowerCase().includes(q)) ||
       arr(c.segmento).some(s => s.toLowerCase().includes(q))
     )
   }, [communications, search])
@@ -679,7 +673,7 @@ export default function CalendarPage() {
   const canalOptions  = useMemo(() => [...new Set(communications.flatMap(c => arr(c.canal)))].sort(),   [communications])
   const topicoOptions = useMemo(() => [...new Set(communications.flatMap(c => arr(c.topico)))].sort(),  [communications])
   const segOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.segmento)))].sort(),[communications])
-  const estadoOptions = ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
+  const estadoOptions = appLists.estados ?? ['Aprobado','En revisión','Borrador','Publicado','Cancelado']
   const filterOptions = { pais: paiOptions, canal: canalOptions, topico: topicoOptions, segmento: segOptions, estado: estadoOptions }
 
   const activeFilters = Object.values(filters).reduce((n, v) => n + v.length, 0)
@@ -734,14 +728,16 @@ export default function CalendarPage() {
       const n = Math.max(intC[k] ?? 0, extC[k] ?? 0)
       if (n > 3) {
         if (!map[date]) map[date] = []
-        map[date].push({ flag: COUNTRY_META[p]?.flag ?? '', name: COUNTRY_META[p]?.name ?? p, n })
+        map[date].push({ flag: countryMeta[p]?.flag ?? '', name: countryMeta[p]?.name ?? p, n })
       }
     })
     return map
   }, [weekFiltered])
 
-  const internalCh  = channels.length > 0 ? channels.filter(c => c.type === 'internal').map(c => c.name) : INTERNAL_CHANNELS
-  const externalCh  = channels.length > 0 ? channels.filter(c => c.type === 'external').map(c => c.name) : EXTERNAL_CHANNELS
+  const INT_SET = useMemo(() => new Set(internalChannels), [internalChannels])
+  const EXT_SET = useMemo(() => new Set(externalChannels), [externalChannels])
+  const internalCh  = internalChannels
+  const externalCh  = externalChannels
   const allChannels = [...internalCh, ...externalCh]
   const visChannels = allChannels.filter(ch => filters.canal.length === 0 || filters.canal.includes(ch))
 
@@ -915,6 +911,8 @@ export default function CalendarPage() {
                     setTimeout(() => openEdit(ev), 50)
                   }}
                   onClose={() => setSearchOpen(false)}
+                  countryMeta={countryMeta}
+                  channelMeta={channelMeta}
                 />
               </div>
             )}
@@ -944,7 +942,7 @@ export default function CalendarPage() {
               {FILTER_KEYS.flatMap(fd =>
                 filters[fd.key].map(v => (
                   <span key={`${fd.key}-${v}`} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                    {COUNTRY_META[v]?.flag ? `${COUNTRY_META[v].flag} ` : ''}{v}
+                    {countryMeta[v]?.flag ? `${countryMeta[v].flag} ` : ''}{v}
                     <button onClick={() => setFilters(f => ({ ...f, [fd.key]: f[fd.key].filter(x => x !== v) }))} className="hover:text-sky-900">
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -967,7 +965,7 @@ export default function CalendarPage() {
             <FilterRow
               label="País" options={paiOptions} value={filters.pais}
               onChange={v => setFilters(f => ({ ...f, pais: v }))}
-              renderChip={p => `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`}
+              renderChip={p => `${countryMeta[p]?.flag ?? ''} ${countryMeta[p]?.name ?? p}`}
             />
             <FilterRow label="Canal"    options={canalOptions}   value={filters.canal}    onChange={v => setFilters(f => ({ ...f, canal: v }))} />
             <FilterRow label="Estado"   options={estadoOptions}  value={filters.estado}   onChange={v => setFilters(f => ({ ...f, estado: v }))} />
@@ -985,6 +983,7 @@ export default function CalendarPage() {
             comms={dayFiltered} dayStr={selectedDay} today={today}
             onEventClick={openEdit} canEdit={perms.canEdit}
             onAdd={ds => openNew('', ds)} statusT={s => t(`status.${s}`, s)}
+            channelMeta={channelMeta}
           />
         ) : viewMode === 'week' ? (
           <div className="h-full overflow-auto">
@@ -1028,11 +1027,11 @@ export default function CalendarPage() {
               <tbody>
                 <tr><td colSpan={visWeekDays.length + 1} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">{t('calendar.internalChannels')}</td></tr>
                 {internalCh.filter(ch => visChannels.includes(ch)).map(ch => (
-                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} />
+                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} channelMeta={channelMeta} countryMeta={countryMeta} />
                 ))}
                 <tr><td colSpan={visWeekDays.length + 1} className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/70 border-y border-gray-100">{t('calendar.externalChannels')}</td></tr>
                 {externalCh.filter(ch => visChannels.includes(ch)).map(ch => (
-                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} />
+                  <WeekChannelRow key={ch} channel={ch} days={visWeekDays} today={today} byDate={byDate} canEdit={perms.canEdit} canEditCountry={canEditCountry} onClickCard={openEdit} onAdd={(ch, ds) => openNew(ch, ds)} onDragStart={id => setDragId(id)} onDrop={handleWeekDrop} statusT={s => t(`status.${s}`, s)} compact={isMobile} channelMeta={channelMeta} countryMeta={countryMeta} />
                 ))}
               </tbody>
             </table>
@@ -1048,7 +1047,7 @@ export default function CalendarPage() {
               <div className="flex flex-wrap gap-3 px-4 py-3 text-xs text-gray-400 border-t border-gray-100">
                 {allChannels.map(ch => (
                   <span key={ch} className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: CHANNEL_META[ch]?.color ?? '#ccc' }} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: channelMeta[ch]?.color ?? '#ccc' }} />
                     <span className="text-gray-500">{ch}</span>
                   </span>
                 ))}
@@ -1062,6 +1061,8 @@ export default function CalendarPage() {
             canEdit={perms.canEdit} onClickCard={openEdit} onAdd={ds => openNew('', ds)}
             onDragStart={id => setDragId(id)} onDrop={handleMonthDrop}
             isMobile={isMobile}
+            countryMeta={countryMeta}
+            channelMeta={channelMeta}
           />
         )}
       </div>

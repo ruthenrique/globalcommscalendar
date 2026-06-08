@@ -3,7 +3,7 @@ import { X, CalendarDays, ChevronRight } from 'lucide-react'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr, cn } from '@/lib/utils'
-import { COUNTRY_META, STATUS_META, CHANNEL_META } from '@/lib/constants'
+import { STATUS_META } from '@/lib/constants'
 
 // ── Helpers ───────────────────────────────────────────────
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -24,6 +24,7 @@ function addDays(ds, n) {
 
 // ── Single comm row ───────────────────────────────────────
 function CommRow({ c }) {
+  const { countryMeta } = useApp()
   const paises = arr(c.pais).slice(0, 4)
   const status = arr(c.estado)[0]
   const meta   = STATUS_META[status] ?? {}
@@ -31,7 +32,7 @@ function CommRow({ c }) {
   return (
     <div className="flex items-center gap-2.5 py-1.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
       <span className="text-sm leading-none flex-shrink-0 min-w-[24px]">
-        {paises.map(p => COUNTRY_META[p]?.flag ?? '').join('') || '🌐'}
+        {paises.map(p => countryMeta[p]?.flag ?? '').join('') || '🌐'}
       </span>
       <span className="flex-1 text-xs text-gray-800 truncate">{c.titulo}</span>
       <span
@@ -47,7 +48,8 @@ function CommRow({ c }) {
 
 // ── Channel group ─────────────────────────────────────────
 function ChannelGroup({ canal, comms }) {
-  const meta = CHANNEL_META[canal] ?? {}
+  const { channelMeta } = useApp()
+  const meta = channelMeta[canal] ?? {}
   return (
     <div className="mb-3">
       <div className="flex items-center gap-2 px-3 mb-1">

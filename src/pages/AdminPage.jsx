@@ -8,7 +8,7 @@ import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/components/layout/Toaster'
-import { ROLE_META, COUNTRY_META } from '@/lib/constants'
+import { ROLE_META } from '@/lib/constants'
 
 const ADMIN_TABS = [
   { id: 'users',      label: '👥 Usuarios'    },
@@ -23,7 +23,7 @@ const ADMIN_TABS = [
 function UsersPanel() {
   const { t } = useTranslation()
   const { myCountries, role } = useAuth()
-  const { countries } = useApp()
+  const { countries, countryMeta } = useApp()
   const [users,      setUsers]      = useState([])
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [editing,    setEditing]    = useState(null)
@@ -100,7 +100,7 @@ function UsersPanel() {
                     </span>
                     {u.countries?.map(c => (
                       <span key={c} className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        {COUNTRY_META[c]?.flag} {c}
+                        {countryMeta[c]?.flag} {c}
                       </span>
                     ))}
                   </div>
@@ -154,7 +154,7 @@ function UsersPanel() {
                           }}
                           className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${sel ? 'bg-primary/10 border-primary text-primary' : 'border-gray-200 text-muted-foreground'}`}
                         >
-                          {COUNTRY_META[code]?.flag} {code}
+                          {countryMeta[code]?.flag} {code}
                         </button>
                       )
                     })}

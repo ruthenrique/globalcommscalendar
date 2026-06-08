@@ -7,7 +7,7 @@ import { SlidersHorizontal, X, TrendingUp, TrendingDown, Star, FileText, CheckCi
 import { useTranslation } from 'react-i18next'
 import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { COUNTRY_META, CHANNEL_META, STATUS_META, FORMAT_ICON } from '@/lib/constants'
+import { STATUS_META, FORMAT_ICON } from '@/lib/constants'
 import { arr, dateStr } from '@/lib/utils'
 
 const PASTEL = ['#0EA5E9','#10B981','#F59E0B','#8B5CF6','#EC4899','#D85A30','#639922','#378ADD','#06B6D4','#F97316']
@@ -259,7 +259,7 @@ function STitle({ children, sub }) {
 // ── Main Dashboard ────────────────────────────────────────
 export default function AdminGlobalPage() {
   const { t } = useTranslation()
-  const { communications, countries, channels } = useApp()
+  const { communications, countries, channels, countryMeta, channelMeta } = useApp()
   const { role, myCountries } = useAuth()
 
   // Role-based: country_admin sees only their countries (locked)
@@ -276,8 +276,8 @@ export default function AdminGlobalPage() {
     filters.canal.length + filters.topico.length + filters.estado.length + filters.formato.length
 
   // Filter options
-  const countryList = countries.length > 0 ? countries : Object.entries(COUNTRY_META).map(([code, m]) => ({ code, ...m }))
-  const channelList = channels.length > 0 ? channels : Object.keys(CHANNEL_META).map(k => ({ name: k, color: CHANNEL_META[k].color }))
+  const countryList = countries
+  const channelList = channels
   const paiOptions    = useMemo(() => [...new Set(communications.flatMap(c => arr(c.pais)))].sort(),    [communications])
   const canalOptions  = useMemo(() => [...new Set(communications.flatMap(c => arr(c.canal)))].sort(),   [communications])
   const topicoOptions = useMemo(() => [...new Set(communications.flatMap(c => arr(c.topico)))].sort(),  [communications])
@@ -364,7 +364,7 @@ export default function AdminGlobalPage() {
   // Channel donut
   const channelData = useMemo(() =>
     channelList
-      .map(ch => ({ name: ch.name, value: filtered.filter(ev => arr(ev.canal).includes(ch.name)).length, color: ch.color ?? CHANNEL_META[ch.name]?.color ?? '#ccc' }))
+      .map(ch => ({ name: ch.name, value: filtered.filter(ev => arr(ev.canal).includes(ch.name)).length, color: ch.color ?? channelMeta[ch.name]?.color ?? '#ccc' }))
       .filter(c => c.value > 0).sort((a, b) => b.value - a.value),
     [filtered, channelList]
   )
@@ -382,7 +382,7 @@ export default function AdminGlobalPage() {
 
   // Active filter chips (non-locked)
   const activeChips = [
-    ...(!isRestricted ? filters.pais.map(v => ({ key: 'pais', v, label: `${COUNTRY_META[v]?.flag ?? ''} ${COUNTRY_META[v]?.name ?? v}` })) : []),
+    ...(!isRestricted ? filters.pais.map(v => ({ key: 'pais', v, label: `${countryMeta[v]?.flag ?? ''} ${countryMeta[v]?.name ?? v}` })) : []),
     ...filters.canal.map(v  => ({ key: 'canal', v, label: v })),
     ...filters.topico.map(v => ({ key: 'topico', v, label: v })),
     ...filters.estado.map(v => ({ key: 'estado', v, label: v })),
@@ -404,7 +404,7 @@ export default function AdminGlobalPage() {
               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-300">Vista</span>
               {lockedCountries.map(code => (
                 <span key={code} className="flex items-center gap-1 bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  {COUNTRY_META[code]?.flag} {COUNTRY_META[code]?.name ?? code}
+                  {countryMeta[code]?.flag} {countryMeta[code]?.name ?? code}
                 </span>
               ))}
             </div>
@@ -456,7 +456,7 @@ export default function AdminGlobalPage() {
         {/* Expanded filter panel */}
         {filtersOpen && !isRestricted && (
           <div className="px-5 pb-3 pt-1 border-t border-gray-50 space-y-0.5">
-            <FilterRow label={t('filter.country')} options={paiOptions}     value={filters.pais}    onChange={setF('pais')}    renderChip={p => `${COUNTRY_META[p]?.flag ?? ''} ${COUNTRY_META[p]?.name ?? p}`} />
+            <FilterRow label={t('filter.country')} options={paiOptions}     value={filters.pais}    onChange={setF('pais')}    renderChip={p => `${countryMeta[p]?.flag ?? ''} ${countryMeta[p]?.name ?? p}`} />
             <FilterRow label={t('filter.channel')} options={canalOptions}   value={filters.canal}   onChange={setF('canal')}   />
             <FilterRow label={t('filter.status')}  options={estadoOptions}  value={filters.estado}  onChange={setF('estado')}  />
             <FilterRow label={t('modal.formato')}  options={formatoOptions} value={filters.formato} onChange={setF('formato')} renderChip={f => `${FORMAT_ICON[f] ?? '📄'} ${f}`} />
@@ -597,8 +597,8 @@ export default function AdminGlobalPage() {
             <STitle sub={t('dash.sections.byCountrySub')}>{t('dash.sections.byCountry')}</STitle>
             <div className="space-y-2.5">
               {countryData.map(c => {
-                const color = c.color ?? COUNTRY_META[c.code]?.color ?? '#888'
-                const flag  = c.flag  ?? COUNTRY_META[c.code]?.flag  ?? ''
+                const color = c.color ?? countryMeta[c.code]?.color ?? '#888'
+                const flag  = c.flag  ?? countryMeta[c.code]?.flag  ?? ''
                 return (
                   <div key={c.code} className="flex items-center gap-3">
                     <span className="text-sm w-5 flex-shrink-0 text-center">{flag}</span>
@@ -637,7 +637,7 @@ export default function AdminGlobalPage() {
                   return (
                     <tr key={c.code} className="border-t border-gray-100">
                       <td className="px-3 py-1.5 font-medium text-gray-700">
-                        {c.flag ?? COUNTRY_META[c.code]?.flag} {c.name}
+                        {c.flag ?? countryMeta[c.code]?.flag} {c.name}
                       </td>
                       {row.map((n, i) => (
                         <td key={i} className="px-2 py-1.5 text-center">

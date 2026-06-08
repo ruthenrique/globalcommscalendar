@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { COUNTRY_META, FORMAT_ICON, PAIS_IDIOMA } from '@/lib/constants'
+import { FORMAT_ICON, PAIS_IDIOMA } from '@/lib/constants'
 import { arr, formatDateTime } from '@/lib/utils'
 import { toast } from '@/components/layout/Toaster'
 import { supabase } from '@/lib/supabase'
@@ -88,7 +88,7 @@ function StatusSelect({ label, value, onChange, disabled }) {
 }
 
 export default function CommModal({ open, onClose, initial = null }) {
-  const { countries, channels, categories, segments, settings, createComm, updateComm, deleteComm } = useApp()
+  const { countries, channels, categories, segments, settings, appLists, countryMeta, createComm, updateComm, deleteComm } = useApp()
   const { canEditCountry, role, loading: authLoading } = useAuth()
   const { t } = useTranslation()
 
@@ -169,14 +169,14 @@ export default function CommModal({ open, onClose, initial = null }) {
   }
 
   const canDelete   = role === 'super_admin'
-  const countryList = countries.length > 0 ? countries : Object.keys(COUNTRY_META).map(k => ({ code: k, ...COUNTRY_META[k] }))
-  const channelList = channels.length > 0 ? channels : []
-  const categoryList = categories.length > 0 ? categories : []
-  const segmentList  = segments.length > 0  ? segments  : []
-  const idiomas      = settings.idiomas   ?? ['Español','Portugués','Inglés']
-  const alcances     = settings.alcances  ?? ['Global','Local']
-  const ubicaciones  = settings.ubicaciones ?? ['Oficina','Operaciones']
-  const formatos     = settings.formatos  ?? ['Email','Post','Video','Encuesta','Carrusel']
+  const countryList  = countries
+  const channelList  = channels
+  const categoryList = categories
+  const segmentList  = segments
+  const idiomas      = appLists.idiomas    ?? []
+  const alcances     = appLists.alcances   ?? []
+  const ubicaciones  = appLists.ubicaciones ?? []
+  const formatos     = appLists.formatos   ?? []
   // estados definidos en ESTADO_META arriba
 
   const editable = authLoading || isNew || canEditCountry(arr(form.pais))
@@ -247,8 +247,8 @@ export default function CommModal({ open, onClose, initial = null }) {
               value={form.pais}
               onChange={v => set('pais', v)}
               getKey={c => c.code ?? c}
-              getLabel={c => `${c.flag ?? COUNTRY_META[c.code ?? c]?.flag ?? ''} ${c.name ?? c.code ?? c}`}
-              colorFn={k => COUNTRY_META[k]?.color}
+              getLabel={c => `${c.flag ?? countryMeta[c.code ?? c]?.flag ?? ''} ${c.name ?? c.code ?? c}`}
+              colorFn={k => countryMeta[k]?.color}
             />
           </div>
 
@@ -256,7 +256,7 @@ export default function CommModal({ open, onClose, initial = null }) {
           <div className="col-span-2">
             <MultiSelect
               label={t('modal.canal')}
-              options={channelList.length > 0 ? channelList.map(c => c.name) : Object.keys({ Emarsys:1, Humand:1, 'Cartelera Digital':1, LinkedIn:1, TikTok:1, Instagram:1 })}
+              options={channelList.map(c => c.name)}
               value={form.canal}
               onChange={v => set('canal', v)}
             />
@@ -266,7 +266,7 @@ export default function CommModal({ open, onClose, initial = null }) {
           <div className="col-span-2">
             <MultiSelect
               label={t('modal.segmento')}
-              options={segmentList.length > 0 ? segmentList.map(s => s.name) : ['Staff','Tiendas Isadora','TM','Atelier','TMB','Logística','Producción','Staff Retail']}
+              options={segmentList.map(s => s.name)}
               value={form.segmento}
               onChange={v => set('segmento', v)}
             />
@@ -276,7 +276,7 @@ export default function CommModal({ open, onClose, initial = null }) {
           <div className="col-span-2">
             <MultiSelect
               label={t('modal.topico')}
-              options={categoryList.length > 0 ? categoryList.map(c => c.name) : ['Cultura','Bienestar','Innovación','DEI','Campaña','Org','Beneficios','Talento','Escucha','Formación','Marca','Operaciones','Gestión']}
+              options={categoryList.map(c => c.name)}
               value={form.topico}
               onChange={v => set('topico', v)}
               colorFn={k => categoryList.find(c => c.name === k)?.color ?? '#888'}

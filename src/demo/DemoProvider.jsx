@@ -1,7 +1,7 @@
 // Demo mode — inyecta los mismos contextos (AuthContext / AppContext)
 // con datos locales. No requiere Supabase auth.
 import { useState } from 'react'
-import { COUNTRY_META, CHANNEL_META, INTERNAL_CHANNELS, EXTERNAL_CHANNELS, ROLE_META } from '@/lib/constants'
+import { ROLE_META } from '@/lib/constants'
 import { SEED } from './seed'
 
 // Importamos los contextos internos directamente para wrappearlos
@@ -13,18 +13,23 @@ const MOCK_PROFILE = {
   role: 'super_admin', countries: [], color: '#534AB7', initials: 'AG',
 }
 
-const COUNTRIES = Object.entries(COUNTRY_META).map(([code, m], i) => ({
-  id: code, code, ...m,
-  timezone: 'America/Argentina/Buenos_Aires', active: true, sort_order: i + 1,
-}))
+// Demo data: countries and channels hardcoded since DemoProvider doesn't use Supabase
+const COUNTRIES = [
+  { id: 'AR', code: 'AR', name: 'Argentina',  flag: '🇦🇷', color: '#74ACDF', timezone: 'America/Argentina/Buenos_Aires', active: true, sort_order: 1 },
+  { id: 'BR', code: 'BR', name: 'Brasil',     flag: '🇧🇷', color: '#009739', timezone: 'America/Sao_Paulo',              active: true, sort_order: 2 },
+  { id: 'CL', code: 'CL', name: 'Chile',      flag: '🇨🇱', color: '#D52B1E', timezone: 'America/Santiago',              active: true, sort_order: 3 },
+  { id: 'MX', code: 'MX', name: 'México',     flag: '🇲🇽', color: '#006847', timezone: 'America/Mexico_City',           active: true, sort_order: 4 },
+  { id: 'PE', code: 'PE', name: 'Perú',       flag: '🇵🇪', color: '#D91023', timezone: 'America/Lima',                  active: true, sort_order: 5 },
+  { id: 'ES', code: 'ES', name: 'España',     flag: '🇪🇸', color: '#AA151B', timezone: 'Europe/Madrid',                 active: true, sort_order: 6 },
+  { id: 'GL', code: 'GL', name: 'Global',     flag: '🌍',  color: '#378ADD', timezone: 'UTC',                           active: true, sort_order: 7 },
+]
 
 const CHANNELS = [
-  ...INTERNAL_CHANNELS.map((name, i) => ({
-    id: name, name, color: CHANNEL_META[name].color, type: 'internal', active: true, sort_order: i + 1,
-  })),
-  ...EXTERNAL_CHANNELS.map((name, i) => ({
-    id: name, name, color: CHANNEL_META[name].color, type: 'external', active: true, sort_order: i + 4,
-  })),
+  { id: 'Intranet',     name: 'Intranet',     color: '#534AB7', type: 'internal', active: true, sort_order: 1 },
+  { id: 'Newsletter',   name: 'Newsletter',   color: '#1D9E75', type: 'internal', active: true, sort_order: 2 },
+  { id: 'TV Interna',   name: 'TV Interna',   color: '#D85A30', type: 'internal', active: true, sort_order: 3 },
+  { id: 'Instagram',    name: 'Instagram',    color: '#C837AB', type: 'external', active: true, sort_order: 4 },
+  { id: 'LinkedIn',     name: 'LinkedIn',     color: '#0A66C2', type: 'external', active: true, sort_order: 5 },
 ]
 
 const CATEGORIES = [

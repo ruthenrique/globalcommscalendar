@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr } from '@/lib/utils'
-import { COUNTRY_META, STATUS_META, CHANNEL_META } from '@/lib/constants'
+import { STATUS_META } from '@/lib/constants'
 import CommModal from '@/components/CommModal'
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -17,19 +17,19 @@ function addDays(ds, n) {
   return d.toISOString().slice(0, 10)
 }
 
-function CommCard({ c, onOpen }) {
+function CommCard({ c, onOpen, countryMeta, channelMeta }) {
   const paises = arr(c.pais)
   const status = arr(c.estado)[0]
   const canal  = arr(c.canal)[0]
   const meta   = STATUS_META[status] ?? {}
-  const chMeta = CHANNEL_META[canal] ?? {}
+  const chMeta = (channelMeta ?? {})[canal] ?? {}
   return (
     <div
       onClick={() => onOpen(c)}
       className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-pointer group"
     >
       <div className="flex-shrink-0 text-base leading-none w-8 text-center">
-        {paises.slice(0, 2).map(p => COUNTRY_META[p]?.flag ?? '').join('') || '🌐'}
+        {paises.slice(0, 2).map(p => (countryMeta ?? {})[p]?.flag ?? '').join('') || '🌐'}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-gray-800 truncate">{c.titulo}</div>
@@ -56,7 +56,7 @@ function CommCard({ c, onOpen }) {
   )
 }
 
-function DayBlock({ ds, comms, isToday, onOpen }) {
+function DayBlock({ ds, comms, isToday, onOpen, countryMeta, channelMeta }) {
   const { t } = useTranslation()
   const d = new Date(ds + 'T00:00:00')
   const label = isToday
@@ -90,11 +90,11 @@ function DayBlock({ ds, comms, isToday, onOpen }) {
           {Object.entries(byCanal).map(([canal, evs]) => (
             <div key={canal}>
               <div className="flex items-center gap-2 px-1 mb-1.5">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNEL_META[canal]?.color ?? '#ccc' }} />
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: (channelMeta ?? {})[canal]?.color ?? '#ccc' }} />
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{canal}</span>
               </div>
               <div className="space-y-1.5">
-                {evs.map(c => <CommCard key={c.id} c={c} onOpen={onOpen} />)}
+                {evs.map(c => <CommCard key={c.id} c={c} onOpen={onOpen} countryMeta={countryMeta} channelMeta={channelMeta} />)}
               </div>
             </div>
           ))}
@@ -106,7 +106,7 @@ function DayBlock({ ds, comms, isToday, onOpen }) {
 
 export default function BriefingPage() {
   const { t } = useTranslation()
-  const { communications } = useApp()
+  const { communications, countryMeta, channelMeta } = useApp()
   const { role, myCountries } = useAuth()
   const [editComm, setEditComm] = useState(null)
 
@@ -154,7 +154,7 @@ export default function BriefingPage() {
         <div className="max-w-2xl mx-auto px-6 py-6">
           {days.map(({ ds, comms, isToday }) => (
             (comms.length > 0 || isToday) && (
-              <DayBlock key={ds} ds={ds} comms={comms} isToday={isToday} onOpen={setEditComm} />
+              <DayBlock key={ds} ds={ds} comms={comms} isToday={isToday} onOpen={setEditComm} countryMeta={countryMeta} channelMeta={channelMeta} />
             )
           ))}
           {days.every(d => d.comms.length === 0) && (

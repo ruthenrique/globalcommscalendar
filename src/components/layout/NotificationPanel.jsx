@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { arr, todayStr, cn } from '@/lib/utils'
-import { COUNTRY_META, CHANNEL_META, STATUS_META } from '@/lib/constants'
+import { STATUS_META } from '@/lib/constants'
 import CommModal from '@/components/CommModal'
 
 // ── Helpers ──────────────────────────────────────────────
@@ -69,14 +69,14 @@ function useNotifications() {
 }
 
 // ── Hover Preview Card ────────────────────────────────────
-function CommPreview({ comm, top, onEdit }) {
+function CommPreview({ comm, top, onEdit, countryMeta, channelMeta }) {
   const { t } = useTranslation()
   const paises  = arr(comm.pais)
   const canales = arr(comm.canal)
   const estado  = arr(comm.estado)[0]
   const formato = arr(comm.formato)[0]
   const sMeta   = STATUS_META[estado] ?? {}
-  const cMeta   = CHANNEL_META[canales[0]] ?? {}
+  const cMeta   = (channelMeta ?? {})[canales[0]] ?? {}
 
   // clamp vertically so card doesn't go off screen
   const clampedTop = Math.min(Math.max(top - 20, 60), window.innerHeight - 280)
@@ -111,7 +111,7 @@ function CommPreview({ comm, top, onEdit }) {
             </div>
           </div>
           <div className="text-xl leading-none flex-shrink-0 mt-0.5">
-            {paises.slice(0, 3).map(p => COUNTRY_META[p]?.flag ?? '').join('') || '🌐'}
+            {paises.slice(0, 3).map(p => (countryMeta ?? {})[p]?.flag ?? '').join('') || '🌐'}
           </div>
         </div>
 
@@ -134,7 +134,7 @@ function CommPreview({ comm, top, onEdit }) {
           <div className="flex flex-wrap gap-1 mb-3">
             {paises.map(p => (
               <span key={p} className="text-[10px] bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded-full border border-gray-100">
-                {COUNTRY_META[p]?.flag ?? ''} {COUNTRY_META[p]?.name ?? p}
+                {(countryMeta ?? {})[p]?.flag ?? ''} {(countryMeta ?? {})[p]?.name ?? p}
               </span>
             ))}
           </div>
@@ -161,7 +161,7 @@ function CommPreview({ comm, top, onEdit }) {
 }
 
 // ── Comm row ─────────────────────────────────────────────
-function CommRow({ c, rowBg, onHover, onLeave }) {
+function CommRow({ c, rowBg, onHover, onLeave, countryMeta }) {
   const paises = arr(c.pais).slice(0, 3)
   const canal  = arr(c.canal)[0]
   const [dd, mm] = (c.date ?? '').split('-').reverse()
@@ -173,7 +173,7 @@ function CommRow({ c, rowBg, onHover, onLeave }) {
       className={cn('flex items-center gap-2.5 py-1.5 px-3 rounded-lg mx-2 cursor-default transition-colors group', rowBg)}
     >
       <div className="text-sm leading-none flex-shrink-0">
-        {paises.map(p => COUNTRY_META[p]?.flag ?? '').join('') || '🌐'}
+        {paises.map(p => (countryMeta ?? {})[p]?.flag ?? '').join('') || '🌐'}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-gray-800 truncate">{c.titulo}</div>
@@ -188,7 +188,7 @@ function CommRow({ c, rowBg, onHover, onLeave }) {
 }
 
 // ── Notification group ────────────────────────────────────
-function NotifGroup({ group, onHover, onLeave }) {
+function NotifGroup({ group, onHover, onLeave, countryMeta }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(true)
   const visible = group.comms.slice(0, 6)
@@ -211,7 +211,7 @@ function NotifGroup({ group, onHover, onLeave }) {
       {open && (
         <div className="pb-2 space-y-0.5">
           {visible.map(c => (
-            <CommRow key={c.id} c={c} rowBg={group.rowBg} onHover={onHover} onLeave={onLeave} />
+            <CommRow key={c.id} c={c} rowBg={group.rowBg} onHover={onHover} onLeave={onLeave} countryMeta={countryMeta} />
           ))}
           {extra > 0 && (
             <p className="text-[10px] text-gray-400 px-5 pt-1">+{extra} más</p>
@@ -237,6 +237,7 @@ export function NotifBadge() {
 // ── Main panel ────────────────────────────────────────────
 export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
   const { t }    = useTranslation()
+  const { countryMeta, channelMeta } = useApp()
   const groups   = useNotifications()
   const total    = groups.reduce((n, g) => n + g.count, 0)
   const panelRef = useRef(null)
@@ -305,6 +306,8 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
                 comm={preview.comm}
                 top={preview.top}
                 onEdit={handleEdit}
+                countryMeta={countryMeta}
+                channelMeta={channelMeta}
               />
             </div>
           )}
@@ -343,7 +346,7 @@ export default function NotificationPanel({ open, onClose, onGoToCalendar }) {
                 </div>
               ) : (
                 groups.map(g => (
-                  <NotifGroup key={g.id} group={g} onHover={handleHover} onLeave={handleLeave} />
+                  <NotifGroup key={g.id} group={g} onHover={handleHover} onLeave={handleLeave} countryMeta={countryMeta} />
                 ))
               )}
             </div>

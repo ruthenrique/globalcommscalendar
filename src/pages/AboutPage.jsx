@@ -1,7 +1,7 @@
 import { Calendar, BarChart2, Table2, ClipboardList, Bell, Globe, Settings, Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useApp }  from '@/contexts/AppContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { COUNTRY_META } from '@/lib/constants'
 
 const FEATURE_IDS = ['cal', 'brief', 'map', 'data', 'notif', 'admin', 'global']
 const FEATURE_ICONS = { cal: Calendar, brief: ClipboardList, map: BarChart2, data: Table2, notif: Bell, admin: Settings, global: Globe }
@@ -67,6 +67,7 @@ function FeatureCard({ id, t }) {
 
 export default function AboutPage() {
   const { t }                       = useTranslation()
+  const { countryMeta }             = useApp()
   const { role, profile, myCountries } = useAuth()
 
   const firstName    = profile?.full_name?.split(' ')[0] ?? ''
@@ -77,7 +78,7 @@ export default function AboutPage() {
   const roleActions  = t(`about.roles.${role ?? 'viewer'}.actions`, { returnObjects: true })
 
   const countryNames = (myCountries ?? [])
-    .map(code => COUNTRY_META[code]?.name ?? code)
+    .map(code => countryMeta[code]?.name ?? code)
     .filter(Boolean)
 
   const availableFeatures = FEATURE_IDS.filter(id => ROLE_ACCESS[id].includes(role ?? 'viewer'))

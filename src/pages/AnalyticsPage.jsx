@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
 import { useApp } from '@/contexts/AppContext'
-import { COUNTRY_META, CHANNEL_META, STATUS_META } from '@/lib/constants'
+import { STATUS_META } from '@/lib/constants'
 import { arr } from '@/lib/utils'
 
 const COLORS = ['#534AB7','#1D9E75','#D85A30','#BA7517','#185FA5','#993556','#639922','#378ADD']
@@ -33,22 +33,22 @@ function HBar({ label, value, max, color, flag }) {
 }
 
 export default function AnalyticsPage() {
-  const { communications } = useApp()
+  const { communications, countries, channels } = useApp()
   const total = communications.length || 1
 
   const byCountry = useMemo(() =>
-    Object.entries(COUNTRY_META).map(([code, m]) => ({
-      code, name: m.name, flag: m.flag, color: m.color,
-      count: communications.filter(c => arr(c.pais).includes(code)).length,
+    countries.map(c => ({
+      code: c.code, name: c.name, flag: c.flag, color: c.color,
+      count: communications.filter(comm => arr(comm.pais).includes(c.code)).length,
     })).sort((a, b) => b.count - a.count)
-  , [communications])
+  , [communications, countries])
 
   const byChannel = useMemo(() =>
-    Object.keys(CHANNEL_META).map(ch => ({
-      name: ch, color: CHANNEL_META[ch].color,
-      count: communications.filter(c => arr(c.canal).includes(ch)).length,
+    channels.map(ch => ({
+      name: ch.name, color: ch.color,
+      count: communications.filter(c => arr(c.canal).includes(ch.name)).length,
     })).sort((a, b) => b.count - a.count)
-  , [communications])
+  , [communications, channels])
 
   const byStatus = useMemo(() =>
     Object.keys(STATUS_META).map(s => ({
