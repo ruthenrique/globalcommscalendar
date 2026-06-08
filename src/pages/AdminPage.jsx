@@ -200,6 +200,12 @@ function ListPanel({ table, fields, label }) {
   }, [table])
 
   async function save() {
+    // Validar campos requeridos antes de enviar a DB
+    const missing = fields.filter(f => f.required && !String(form[f.key] ?? '').trim())
+    if (missing.length) {
+      toast({ title: `Completá: ${missing.map(f => f.label).join(', ')}`, variant: 'destructive' })
+      return
+    }
     if (editing === 'new') {
       const { data, error } = await supabase.from(table).insert(form).select().single()
       if (!error) { setItems(p => [...p, data]); setEditing(null); setAdding(false); setForm({}); reload() }
@@ -232,7 +238,9 @@ function ListPanel({ table, fields, label }) {
           <div className="grid grid-cols-2 gap-3">
             {fields.map(f => (
               <div key={f.key}>
-                <Label className="text-xs">{f.label}</Label>
+                <Label className="text-xs">
+                  {f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}
+                </Label>
                 {f.type === 'color' ? (
                   <div className="flex gap-2 mt-1 items-center">
                     <input type="color" value={form[f.key] ?? '#888'} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className="h-8 w-12 border rounded" />
@@ -374,8 +382,8 @@ export default function AdminPage() {
             table="countries"
             label="País"
             fields={[
-              { key: 'code',     label: 'Código',    type: 'text'  },
-              { key: 'name',     label: 'Nombre',    type: 'text'  },
+              { key: 'code',     label: 'Código',    type: 'text',  required: true },
+              { key: 'name',     label: 'Nombre',    type: 'text',  required: true },
               { key: 'flag',     label: 'Emoji',     type: 'text'  },
               { key: 'color',    label: 'Color',     type: 'color' },
               { key: 'timezone', label: 'Timezone',  type: 'text'  },
@@ -387,7 +395,7 @@ export default function AdminPage() {
             table="categories"
             label="Categoría"
             fields={[
-              { key: 'name',       label: 'Nombre',    type: 'text'  },
+              { key: 'name',       label: 'Nombre',    type: 'text',  required: true },
               { key: 'color',      label: 'Color',     type: 'color' },
               { key: 'bg_color',   label: 'Fondo',     type: 'color' },
               { key: 'sort_order', label: 'Orden',     type: 'text'  },
@@ -399,9 +407,9 @@ export default function AdminPage() {
             table="channels"
             label="Canal"
             fields={[
-              { key: 'name',  label: 'Nombre', type: 'text'  },
+              { key: 'name',  label: 'Nombre', type: 'text',  required: true },
               { key: 'color', label: 'Color',  type: 'color' },
-              { key: 'type',  label: 'Tipo',   type: 'text'  },
+              { key: 'type',  label: 'Tipo',   type: 'text',  required: true },
             ]}
           />
         )}
@@ -410,7 +418,7 @@ export default function AdminPage() {
             table="segments"
             label="Segmento"
             fields={[
-              { key: 'name',       label: 'Nombre',    type: 'text'   },
+              { key: 'name',       label: 'Nombre',    type: 'text',  required: true },
               { key: 'sort_order', label: 'Orden',     type: 'text'   },
             ]}
           />
